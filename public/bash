@@ -1,0 +1,6 @@
+#!/bin/sh
+
+## AAAAAAAAAA
+
+#TODO send file via curl
+#TODO process response code
