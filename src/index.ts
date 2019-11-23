@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import express from 'express';
-import badgen from 'badgen';
+import {badgen} from 'badgen';
 import path from 'path';
 import fs from 'fs';
 
@@ -27,6 +27,7 @@ app.post('/v1/:org/:repo/:branch/:commit.html', (req, res) => {
   console.info("POST request to /v1/%s/%s/%s/%s.html", org, repo, branch, commit);
 
   const {token, format} = req.query;
+  //TODO @Metadata token should come from metadata
   if (token != TOKEN) {
     return res.status(401).send();
   }
@@ -36,27 +37,35 @@ app.post('/v1/:org/:repo/:branch/:commit.html', (req, res) => {
     return res.status(406).send();
   }
 
-  return res.status(501).send();
-
   //TODO acquire file, verify file size/content type (HTML)
   const contents = "";
   //req.on('data', (raw) => {});
   //req.on('end', () => {});
 
-  // const doc = new DOMParser().parseFromString(contents, "text/html");
-  // const coverage = formats.get_format(reporter).parse_coverage(doc);
-  //TODO create badge for coverage %
-  //TODO store coverage % badge at %HOST_DIR%/%org%/%repo%/%commit%/badge.svg
-  //TODO store uploaded file at %HOST_DIR%/%org%/%repo%/%commit%/index.html
+  const doc = new DOMParser().parseFromString(contents, "text/html");
+  const formatter = formats.get_format(reporter);
+  const coverage = formatter.parse_coverage(doc);
 
-  //TODO set branch alias for coverage % / uploaded file
+  const badge = badgen({
+    label: "coverage",
+    status: Math.floor(coverage).toString() + "%",
+    //TODO @Metadata stage values should come from metadata
+    color: formatter.match_color(coverage, 95, 80),
+  });
+  //TODO store coverage % badge at %HOST_DIR%/%org%/%repo%/%commit%/badge.svg
+  //TODO store report file at %HOST_DIR%/%org%/%repo%/%commit%/index.html
+
+  //TODO @Metadata set branch alias for badge / report file
+
+  return res.status(501).send();
 });
 
 app.get('/v1/:org/:repo/:branch.svg', (req, res) => {
   const {org, repo, branch} = req.params;
   console.info("GET request to /v1/%s/%s/%s.svg", org, repo, branch);
 
-  //TODO link the badge via metadata
+  //TODO @Metadata get the commit @@ via metadata
+  //TODO send the badge file
   return res.status(501).send();
 });
 
@@ -64,7 +73,8 @@ app.get('/v1/:org/:repo/:branch.html', (req, res) => {
   const {org, repo, branch} = req.params;
   console.info("GET request to /v1/%s/%s/%s.html", org, repo, branch);
 
-  //TODO link the file via metadata
+  //TODO @Metadata get the commit @@ via metadata
+  //TODO send the report file
   return res.status(501).send();
 });
 
@@ -73,7 +83,7 @@ app.get('/v1/:org/:repo/:branch/:commit.svg', (req, res) => {
   const {org, repo, branch, commit} = req.params;
   console.info("GET request to /v1/%s/%s/%s/%s.svg", org, repo, branch, commit);
 
-  //TODO link the badge
+  //TODO send the badge file
   return res.status(501).send();
 });
 
@@ -82,7 +92,7 @@ app.get('/v1/:org/:repo/:branch/:commit.html', (req, res) => {
   const {org, repo, branch, commit} = req.params;
   console.info("GET request to /v1/%s/%s/%s/%s.html", org, repo, branch, commit);
   
-  //TODO link the file
+  //TODO send the report file
   return res.status(501).send();
 });
 
