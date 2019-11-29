@@ -36,12 +36,12 @@ app.post("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
   const { token, format } = req.query;
   //TODO @Metadata token should come from metadata
   if (token != TOKEN) {
-    return res.status(401).send();
+    return res.status(401).send("Invalid token");
   }
 
   const reporter = format || "tarpaulin";
   if (!formats.list_formats().includes(reporter)) {
-    return res.status(406).send();
+    return res.status(406).send("Report format unknown");
   }
 
   //TODO acquire file, verify file size/content type (HTML)
@@ -51,7 +51,12 @@ app.post("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
 
   const doc = new DOMParser().parseFromString(contents, "text/html");
   const formatter = formats.get_format(reporter);
-  const coverage = formatter.parse_coverage(doc);
+  let coverage: number;
+  try {
+    coverage = formatter.parse_coverage(doc);
+  } catch {
+    return res.status(400).send("Invalid report document");
+  }
 
   const badge = badgen({
     label: "coverage",

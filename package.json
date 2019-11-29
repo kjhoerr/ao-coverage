@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://git.submelon.dev/kjhoerr/ao-coverage.git"
   },
-  "main": "dist/index.js",
+  "main": "build/index.js",
   "scripts": {
     "start": "tsc && node ./build/index.js",
     "tsc": "tsc"
@@ -17,7 +17,7 @@
     "@types/express": "^4.17.2",
     "badgen": "3.0.1",
     "dotenv": "8.2.0",
-    "express": "4.17.2",
+    "express": "4.17.1",
     "typescript": "^3.7.2"
   },
   "devDependencies": {

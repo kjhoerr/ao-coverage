@@ -33,8 +33,30 @@ const FormatsObj: FormatObj = {
   formats: {
     tarpaulin: {
       parse_coverage: (file: Document) => {
-        //TODO parse coverage from file (example?)
-        return 0.0;
+        const scripts = file.getElementsByTagName("script");
+        if (scripts.length == 0) {
+          throw new Error("Invalid report document");
+        }
+        const data = scripts[0].text;
+        const accumFunc = (regex: RegExp) => {
+          let acc: number = 0;
+          while (true) {
+            const match = regex.exec(data);
+            if (match === null) break;
+            acc += Number(match[1]);
+          }
+
+          return acc;
+        };
+
+        const covered = accumFunc(/"covered":(\d*)/g);
+        const coverable = accumFunc(/"coverable":(\d*)/g);
+
+        // do not error if LOC is 0
+        if (coverable === 0) {
+          return 0.0;
+        }
+        return (100 * covered) / coverable;
       },
       match_color: default_color_matches
     }
