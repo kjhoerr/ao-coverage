@@ -97,7 +97,7 @@ app.get("/v1/:org/:repo/:branch.svg", (req, res) => {
   //TODO @Metadata get the commit @@ via metadata
   const commit = "";
 
-  res.sendFile(path.join(HOST_DIR, org, repo, branch, commit, "badge.svg"));
+  //res.sendFile(path.join(HOST_DIR, org, repo, branch, commit, "badge.svg"));
   return res.status(501).send();
 });
 
@@ -108,7 +108,7 @@ app.get("/v1/:org/:repo/:branch.html", (req, res) => {
   //TODO @Metadata get the commit @@ via metadata
   const commit = "";
 
-  res.sendFile(path.join(HOST_DIR, org, repo, branch, commit, "index.html"));
+  //res.sendFile(path.join(HOST_DIR, org, repo, branch, commit, "index.html"));
   return res.status(501).send();
 });
 
