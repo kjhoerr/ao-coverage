@@ -1,4 +1,4 @@
-interface Format {
+export interface Format {
   // returns the coverage value as %: Number(90.0), Number(100.0), Number(89.5)
   parse_coverage: (file: Document) => number;
   match_color: (coverage: number, stage_1: number, stage_2: number) => string;
