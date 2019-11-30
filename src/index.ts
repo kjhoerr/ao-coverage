@@ -6,7 +6,6 @@ import path from "path";
 import fs from "fs";
 
 import formats, { Format } from "./formats";
-import metadata from "./metadata";
 
 // Start-up configuration
 dotenv.config();
@@ -25,9 +24,6 @@ if (!path.isAbsolute(HOST_DIR)) {
 }
 
 const app: express.Application = express();
-
-// serve script for posting coverage report
-app.use("/bash", express.static(path.join(__dirname, "..", "public", "bash")));
 
 // Upload HTML file
 app.post("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
@@ -97,7 +93,6 @@ app.get("/v1/:org/:repo/:branch.svg", (req, res) => {
   //TODO @Metadata get the commit @@ via metadata
   const commit = "";
 
-  //res.sendFile(path.join(HOST_DIR, org, repo, branch, commit, "badge.svg"));
   return res.status(501).send();
 });
 
@@ -108,7 +103,6 @@ app.get("/v1/:org/:repo/:branch.html", (req, res) => {
   //TODO @Metadata get the commit @@ via metadata
   const commit = "";
 
-  //res.sendFile(path.join(HOST_DIR, org, repo, branch, commit, "index.html"));
   return res.status(501).send();
 });
 
