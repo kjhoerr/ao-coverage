@@ -46,8 +46,7 @@ app.post("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
     return res.status(401).send("Invalid token");
   }
 
-  const reporter = format || "tarpaulin";
-  if (!formats.list_formats().includes(reporter)) {
+  if (!formats.list_formats().includes(format)) {
     return res.status(406).send("Report format unknown");
   }
 
@@ -63,7 +62,7 @@ app.post("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
     let formatter: Format, coverage: number;
     try {
       const doc = new JSDOM(contents).window.document;
-      formatter = formats.get_format(reporter);
+      formatter = formats.get_format(format);
       coverage = formatter.parse_coverage(doc);
     } catch {
       return res.status(400).send("Invalid report document");
