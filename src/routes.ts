@@ -7,10 +7,14 @@ import fs from "fs";
 import formats, { Format } from "./formats";
 import Metadata from "./metadata";
 import { config_or_error } from "./util/config";
+import logger_config from "./util/logger";
+import winston from "winston";
 
 const TOKEN = process.env.TOKEN || "";
 const UPLOAD_LIMIT = Number(process.env.UPLOAD_LIMIT || 4194304);
 const HOST_DIR = config_or_error("HOST_DIR");
+
+const logger = winston.createLogger(logger_config("HTTP"));
 
 export default (metadata: Metadata) => {
   const router = express.Router();
@@ -38,13 +42,14 @@ export default (metadata: Metadata) => {
       }
     });
     req.on("end", () => {
-      let formatter: Format, coverage: number;
-      try {
-        const doc = new JSDOM(contents).window.document;
-        formatter = formats.get_format(format);
-        coverage = formatter.parse_coverage(doc);
-      } catch {
-        return res.status(400).send("Invalid report document");
+      let coverage: number;
+      const doc = new JSDOM(contents).window.document;
+      const formatter = formats.get_format(format);
+      const result = formatter.parse_coverage(doc);
+      if (typeof result === "number") {
+        coverage = result;
+      } else {
+        return res.status(400).send(result.message);
       }
 
       const badge = badgen({
@@ -84,13 +89,24 @@ export default (metadata: Metadata) => {
     const { org, repo, branch } = req.params;
 
     metadata.getHeadCommit(org, repo, branch).then(
-      commit => {
-        res.sendFile(
-          path.join(HOST_DIR, org, repo, branch, commit, "badge.svg")
-        );
+      result => {
+        if (typeof result === "string") {
+          res.sendFile(
+            path.join(
+              HOST_DIR,
+              org,
+              repo,
+              branch,
+              result.toString(),
+              "badge.svg"
+            )
+          );
+        } else {
+          res.status(404).send(result.message);
+        }
       },
-      () => {
-        //FIXME if ORB DNE, should be 404
+      err => {
+        logger.error(err);
         res.status(500).send("Unknown error occurred");
       }
     );
@@ -100,13 +116,24 @@ export default (metadata: Metadata) => {
     const { org, repo, branch } = req.params;
 
     metadata.getHeadCommit(org, repo, branch).then(
-      commit => {
-        res.sendFile(
-          path.join(HOST_DIR, org, repo, branch, commit, "index.html")
-        );
+      result => {
+        if (typeof result === "string") {
+          res.sendFile(
+            path.join(
+              HOST_DIR,
+              org,
+              repo,
+              branch,
+              result.toString(),
+              "index.html"
+            )
+          );
+        } else {
+          res.status(404).send(result.message);
+        }
       },
-      () => {
-        //FIXME if ORB DNE, should be 404
+      err => {
+        logger.error(err);
         res.status(500).send("Unknown error occurred");
       }
     );
@@ -116,16 +143,20 @@ export default (metadata: Metadata) => {
   router.get("/v1/:org/:repo/:branch/:commit.svg", (req, res) => {
     const { org, repo, branch, commit } = req.params;
 
-    //FIXME prettify error message?
-    res.sendFile(path.join(HOST_DIR, org, repo, branch, commit, "badge.svg"));
+    const file = path.join(HOST_DIR, org, repo, branch, commit, "badge.svg");
+    fs.access(file, fs.constants.R_OK, err =>
+      err === null ? res.sendFile(file) : res.status(404).send("File not found")
+    );
   });
 
   // provide hard link for commit
   router.get("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
     const { org, repo, branch, commit } = req.params;
 
-    //FIXME prettify error message?
-    res.sendFile(path.join(HOST_DIR, org, repo, branch, commit, "index.html"));
+    const file = path.join(HOST_DIR, org, repo, branch, commit, "index.html");
+    fs.access(file, fs.constants.R_OK, err =>
+      err === null ? res.sendFile(file) : res.status(404).send("File not found")
+    );
   });
 
   return router;

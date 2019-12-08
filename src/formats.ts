@@ -1,6 +1,8 @@
+import { InvalidReportDocumentError } from "./errors";
+
 export interface Format {
   // returns the coverage value as %: Number(90.0), Number(100.0), Number(89.5)
-  parse_coverage: (file: Document) => number;
+  parse_coverage: (file: Document) => number | InvalidReportDocumentError;
   match_color: (coverage: number, stage_1: number, stage_2: number) => string;
 }
 
@@ -35,7 +37,7 @@ const FormatsObj: FormatObj = {
       parse_coverage: (file: Document) => {
         const scripts = file.getElementsByTagName("script");
         if (scripts.length == 0) {
-          throw new Error("Invalid report document");
+          return new InvalidReportDocumentError();
         }
         const data = scripts[0].text;
         const accumFunc = (regex: RegExp) => {

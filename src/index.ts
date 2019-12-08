@@ -43,6 +43,7 @@ new MongoClient(MONGO_URI, { useUnifiedTopology: true }).connect(
     app.use(
       expressWinston.logger({
         ...logger_config("HTTP"),
+        colorize: true,
         // filter out token query param from URL
         msg:
           '{{req.method}} {{req.url.replace(/token=[-\\w.~]*(&*)/, "token=$1")}} - {{res.statusCode}} {{res.responseTime}}ms'

@@ -2,6 +2,7 @@ import { Db } from "mongodb";
 import winston from "winston";
 
 import logger_config from "./util/logger";
+import { BranchNotFoundError } from "./errors";
 
 interface Branch {
   head: string;
@@ -37,7 +38,7 @@ class Metadata {
     organization: string,
     repository: string,
     branch: string
-  ): Promise<string> {
+  ): Promise<string | BranchNotFoundError> {
     const result = await this.database
       .collection<Repository>("repository")
       .findOne({
@@ -57,7 +58,7 @@ class Metadata {
       );
       return limb.head;
     } else {
-      throw Error("Branch not found");
+      return new BranchNotFoundError();
     }
   }
 
