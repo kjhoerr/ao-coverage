@@ -1,4 +1,7 @@
 import { Db } from "mongodb";
+import winston from "winston";
+
+import logger_config from "./util/logger";
 
 /** //FIXME fix document schema
  * Rather than using branches as the core, this should be adopted into the following document model:
@@ -18,6 +21,7 @@ export interface Branch {
   name: string;
   head: string;
 }
+const logger = winston.createLogger(logger_config("META"));
 
 class Metadata {
   database: Db;
@@ -36,6 +40,13 @@ class Metadata {
       .findOne({ org, repo, name: branch });
 
     if (result !== null) {
+      logger.debug(
+        "Found commit %s for ORB %s/%s/%s",
+        result.head,
+        org,
+        repo,
+        branch
+      );
       return result.head;
     } else {
       throw Error("Branch not found");
