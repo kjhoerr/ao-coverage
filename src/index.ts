@@ -6,50 +6,56 @@ import { MongoClient } from "mongodb";
 import path from "path";
 import fs from "fs";
 
+import winston from "winston";
+import expressWinston from "express-winston";
+
+dotenv.config();
+
 import formats, { Format } from "./formats";
 import Metadata from "./metadata";
+import logger_config from "./util/logger";
+import { config_or_error, handle_shutdown } from "./util/config";
 
 // Start-up configuration
-dotenv.config();
+const BIND_ADDRESS = process.env.BIND_ADDRESS || "localhost";
 const PORT = Number(process.env.PORT || 3000);
 const TOKEN = process.env.TOKEN || "";
 const UPLOAD_LIMIT = Number(process.env.UPLOAD_LIMIT || 4194304);
-const MONGO_URI =
-  process.env.MONGO_URI ||
-  (() => {
-    throw Error("MONGO_URI must be defined");
-  })();
+
+const logger = winston.createLogger(logger_config("ROOT"));
+
+const MONGO_URI = config_or_error("MONGO_URI");
 const MONGO_DB = process.env.MONGO_DB || "ao-coverage";
-const HOST_DIR =
-  process.env.HOST_DIR ||
-  (() => {
-    throw Error("HOST_DIR must be defined");
-  })();
+const HOST_DIR = config_or_error("HOST_DIR");
 
 fs.accessSync(HOST_DIR, fs.constants.R_OK | fs.constants.W_OK);
 if (!path.isAbsolute(HOST_DIR)) {
-  throw Error("HOST_DIR must be an absolute path");
+  logger.error("HOST_DIR must be an absolute path");
+  process.exit(1);
 }
 
 new MongoClient(MONGO_URI, { useUnifiedTopology: true }).connect(
   (err, mongo) => {
     if (err !== null) {
-      throw err;
+      logger.error(err);
+      process.exit(1);
     }
 
     const app: express.Application = express();
     const metadata = new Metadata(mongo.db(MONGO_DB));
 
+    app.use(
+      expressWinston.logger({
+        ...logger_config("HTTP"),
+        // filter out token query param from URL
+        msg:
+          '{{req.method}} {{req.url.replace(/token=[-\\w.~]*(&*)/, "token=$1")}} - {{res.statusCode}} {{res.responseTime}}ms'
+      })
+    );
+
     // Upload HTML file
     app.post("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
       const { org, repo, branch, commit } = req.params;
-      console.info(
-        "POST request to /v1/%s/%s/%s/%s.html",
-        org,
-        repo,
-        branch,
-        commit
-      );
 
       const { token, format } = req.query;
       //TODO @Metadata token should come from metadata
@@ -112,11 +118,10 @@ new MongoClient(MONGO_URI, { useUnifiedTopology: true }).connect(
 
     app.get("/v1/:org/:repo/:branch.svg", (req, res) => {
       const { org, repo, branch } = req.params;
-      console.info("GET request to /v1/%s/%s/%s.svg", org, repo, branch);
 
       metadata.getHeadCommit(org, repo, branch).then(
         commit => {
-          console.debug(
+          logger.debug(
             "Found commit %s for ORB %s/%s/%s",
             commit,
             org,
@@ -136,11 +141,10 @@ new MongoClient(MONGO_URI, { useUnifiedTopology: true }).connect(
 
     app.get("/v1/:org/:repo/:branch.html", (req, res) => {
       const { org, repo, branch } = req.params;
-      console.info("GET request to /v1/%s/%s/%s.html", org, repo, branch);
 
       metadata.getHeadCommit(org, repo, branch).then(
         commit => {
-          console.debug(
+          logger.debug(
             "Found commit %s for ORB %s/%s/%s",
             commit,
             org,
@@ -161,13 +165,6 @@ new MongoClient(MONGO_URI, { useUnifiedTopology: true }).connect(
     // provide hard link for commit
     app.get("/v1/:org/:repo/:branch/:commit.svg", (req, res) => {
       const { org, repo, branch, commit } = req.params;
-      console.info(
-        "GET request to /v1/%s/%s/%s/%s.svg",
-        org,
-        repo,
-        branch,
-        commit
-      );
 
       res.sendFile(path.join(HOST_DIR, org, repo, branch, commit, "badge.svg"));
     });
@@ -175,39 +172,22 @@ new MongoClient(MONGO_URI, { useUnifiedTopology: true }).connect(
     // provide hard link for commit
     app.get("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
       const { org, repo, branch, commit } = req.params;
-      console.info(
-        "GET request to /v1/%s/%s/%s/%s.html",
-        org,
-        repo,
-        branch,
-        commit
-      );
 
       res.sendFile(
         path.join(HOST_DIR, org, repo, branch, commit, "index.html")
       );
     });
 
-    const server = app.listen(PORT, () => {
-      console.log("Express started on port " + PORT);
+    app.use(expressWinston.errorLogger(logger_config("_ERR")));
+
+    const server = app.listen(PORT, BIND_ADDRESS, () => {
+      logger.info("Express has started: http://%s:%d/", BIND_ADDRESS, PORT);
     });
 
     // application exit handling
-    const handle_closure = (signal: NodeJS.Signals) => {
-      console.log("%s signal received. Closing shop.", signal);
-
-      mongo.close().then(() => {
-        console.log("Mongo client connection closed.");
-        server.close(() => {
-          console.log("Express down.");
-          process.exit();
-        });
-      });
-    };
-
     const handle_codes: NodeJS.Signals[] = ["SIGTERM", "SIGHUP", "SIGINT"];
-    const process_event = (code: NodeJS.Signals) =>
-      process.on(code, handle_closure);
-    handle_codes.map(process_event);
+    handle_codes.map((code: NodeJS.Signals) => {
+      process.on(code, handle_shutdown(mongo, server));
+    });
   }
 );
