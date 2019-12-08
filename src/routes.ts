@@ -65,7 +65,12 @@ export default (metadata: Metadata) => {
           fs.promises.writeFile(path.join(report_path, "index.html"), contents)
         )
         .then(() =>
-          metadata.updateBranch({ org, repo, name: branch, head: commit })
+          metadata.updateBranch({
+            organization: org,
+            repository: repo,
+            branch,
+            head: commit
+          })
         )
         .then(result =>
           result
@@ -85,6 +90,7 @@ export default (metadata: Metadata) => {
         );
       },
       () => {
+        //FIXME if ORB DNE, should be 404
         res.status(500).send("Unknown error occurred");
       }
     );
@@ -100,6 +106,7 @@ export default (metadata: Metadata) => {
         );
       },
       () => {
+        //FIXME if ORB DNE, should be 404
         res.status(500).send("Unknown error occurred");
       }
     );
@@ -109,6 +116,7 @@ export default (metadata: Metadata) => {
   router.get("/v1/:org/:repo/:branch/:commit.svg", (req, res) => {
     const { org, repo, branch, commit } = req.params;
 
+    //FIXME prettify error message?
     res.sendFile(path.join(HOST_DIR, org, repo, branch, commit, "badge.svg"));
   });
 
@@ -116,6 +124,7 @@ export default (metadata: Metadata) => {
   router.get("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
     const { org, repo, branch, commit } = req.params;
 
+    //FIXME prettify error message?
     res.sendFile(path.join(HOST_DIR, org, repo, branch, commit, "index.html"));
   });
 

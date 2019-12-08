@@ -3,24 +3,27 @@ import winston from "winston";
 
 import logger_config from "./util/logger";
 
-/** //FIXME fix document schema
- * Rather than using branches as the core, this should be adopted into the following document model:
- * repo:
- *  - org
- *  - name
- *  - token
- *  - branches: {
- *      [branchname]: {
- *        head
- *      }
- *    }
- */
-export interface Branch {
-  org: string;
-  repo: string;
-  name: string;
+interface Branch {
   head: string;
 }
+
+interface BranchList {
+  [branch: string]: Branch;
+}
+
+export interface HeadIdentity {
+  organization: string;
+  repository: string;
+  branch: string;
+  head: string;
+}
+
+export interface Repository {
+  organization: string;
+  name: string;
+  branches: BranchList;
+}
+
 const logger = winston.createLogger(logger_config("META"));
 
 class Metadata {
@@ -31,33 +34,61 @@ class Metadata {
   }
 
   async getHeadCommit(
-    org: string,
-    repo: string,
+    organization: string,
+    repository: string,
     branch: string
   ): Promise<string> {
     const result = await this.database
-      .collection<Branch>("branch")
-      .findOne({ org, repo, name: branch });
+      .collection<Repository>("repository")
+      .findOne({
+        organization,
+        name: repository,
+        ["branches." + branch]: { $exists: true, $ne: null }
+      });
 
-    if (result !== null) {
+    if (result !== null && Object.keys(result.branches).includes(branch)) {
+      const limb = result.branches[branch];
       logger.debug(
         "Found commit %s for ORB %s/%s/%s",
-        result.head,
-        org,
-        repo,
+        limb.head,
+        organization,
+        repository,
         branch
       );
-      return result.head;
+      return limb.head;
     } else {
       throw Error("Branch not found");
     }
   }
 
-  async updateBranch(branch: Branch): Promise<boolean> {
-    const { head, ...matcher } = branch;
+  async updateBranch(identity: HeadIdentity): Promise<boolean> {
+    const { organization, repository: name, branch, head } = identity;
+    const result = await this.database
+      .collection<Repository>("repository")
+      .findOneAndUpdate(
+        { organization, name },
+        { $set: { ["branches." + branch]: { head } } }
+      );
+
+    if (result.value == null) {
+      return this.createRepository(identity);
+    }
+
+    return result.ok === 1;
+  }
+
+  async createRepository(identity: HeadIdentity): Promise<boolean> {
+    const { organization, repository: name, branch, head } = identity;
+    const repo: Repository = {
+      organization,
+      name,
+      branches: { [branch]: { head } }
+    };
+
     const { result } = await this.database
-      .collection<Branch>("branch")
-      .replaceOne(matcher, branch, { upsert: true });
+      .collection<Repository>("repository")
+      .insertOne(repo);
+
     return result.ok === 1;
   }
 }
