@@ -1,14 +1,15 @@
 import express from "express";
 import { JSDOM } from "jsdom";
 import { badgen } from "badgen";
+import winston from "winston";
 import path from "path";
 import fs from "fs";
 
-import formats, { Format } from "./formats";
-import Metadata from "./metadata";
+import formats from "./formats";
+import Metadata, { HeadIdentity } from "./metadata";
 import { config_or_error } from "./util/config";
 import logger_config from "./util/logger";
-import winston from "winston";
+import { Messages } from "./errors";
 
 const TOKEN = process.env.TOKEN || "";
 const UPLOAD_LIMIT = Number(process.env.UPLOAD_LIMIT || 4194304);
@@ -26,17 +27,17 @@ export default (metadata: Metadata) => {
     const { token, format } = req.query;
     //TODO @Metadata token should come from metadata
     if (token != TOKEN) {
-      return res.status(401).send("Invalid token");
+      return res.status(401).send(Messages.InvalidToken);
     }
 
     if (!formats.list_formats().includes(format)) {
-      return res.status(406).send("Report format unknown");
+      return res.status(406).send(Messages.InvalidFormat);
     }
 
     var contents = "";
     req.on("data", raw => {
       if (contents.length + raw.length > UPLOAD_LIMIT) {
-        res.status(413).send("Uploaded file is too large");
+        res.status(413).send(Messages.FileTooLarge);
       } else {
         contents += raw;
       }
@@ -80,10 +81,25 @@ export default (metadata: Metadata) => {
         .then(result =>
           result
             ? res.status(200).send()
-            : res.status(500).send("Unknown error occurred")
+            : res.status(500).send(Messages.UnknownError)
         );
     });
   });
+
+  const retrieve_file = (
+    res: express.Response,
+    identity: HeadIdentity,
+    file: string
+  ) => {
+    const { organization: org, repository: repo, branch, head } = identity;
+
+    const pathname = path.join(HOST_DIR, org, repo, branch, head, file);
+    fs.access(pathname, fs.constants.R_OK, err =>
+      err === null
+        ? res.sendFile(pathname)
+        : res.status(404).send(Messages.FileNotFound)
+    );
+  };
 
   router.get("/v1/:org/:repo/:branch.svg", (req, res) => {
     const { org, repo, branch } = req.params;
@@ -91,23 +107,20 @@ export default (metadata: Metadata) => {
     metadata.getHeadCommit(org, repo, branch).then(
       result => {
         if (typeof result === "string") {
-          res.sendFile(
-            path.join(
-              HOST_DIR,
-              org,
-              repo,
-              branch,
-              result.toString(),
-              "badge.svg"
-            )
-          );
+          const identity = {
+            organization: org,
+            repository: repo,
+            branch,
+            head: result.toString()
+          };
+          retrieve_file(res, identity, "badge.svg");
         } else {
           res.status(404).send(result.message);
         }
       },
       err => {
         logger.error(err);
-        res.status(500).send("Unknown error occurred");
+        res.status(500).send(Messages.UnknownError);
       }
     );
   });
@@ -118,23 +131,20 @@ export default (metadata: Metadata) => {
     metadata.getHeadCommit(org, repo, branch).then(
       result => {
         if (typeof result === "string") {
-          res.sendFile(
-            path.join(
-              HOST_DIR,
-              org,
-              repo,
-              branch,
-              result.toString(),
-              "index.html"
-            )
-          );
+          const identity = {
+            organization: org,
+            repository: repo,
+            branch,
+            head: result.toString()
+          };
+          retrieve_file(res, identity, "index.html");
         } else {
           res.status(404).send(result.message);
         }
       },
       err => {
         logger.error(err);
-        res.status(500).send("Unknown error occurred");
+        res.status(500).send(Messages.UnknownError);
       }
     );
   });
@@ -142,21 +152,25 @@ export default (metadata: Metadata) => {
   // provide hard link for commit
   router.get("/v1/:org/:repo/:branch/:commit.svg", (req, res) => {
     const { org, repo, branch, commit } = req.params;
-
-    const file = path.join(HOST_DIR, org, repo, branch, commit, "badge.svg");
-    fs.access(file, fs.constants.R_OK, err =>
-      err === null ? res.sendFile(file) : res.status(404).send("File not found")
-    );
+    const identity = {
+      organization: org,
+      repository: repo,
+      branch,
+      head: commit
+    };
+    retrieve_file(res, identity, "badge.svg");
   });
 
   // provide hard link for commit
   router.get("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
     const { org, repo, branch, commit } = req.params;
-
-    const file = path.join(HOST_DIR, org, repo, branch, commit, "index.html");
-    fs.access(file, fs.constants.R_OK, err =>
-      err === null ? res.sendFile(file) : res.status(404).send("File not found")
-    );
+    const identity = {
+      organization: org,
+      repository: repo,
+      branch,
+      head: commit
+    };
+    retrieve_file(res, identity, "index.html");
   });
 
   return router;
