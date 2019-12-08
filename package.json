@@ -1,6 +1,6 @@
 {
   "name": "ao-coverage",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Simple code coverage storage and server",
   "repository": {
     "type": "git",
