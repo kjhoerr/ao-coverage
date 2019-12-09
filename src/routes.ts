@@ -5,7 +5,7 @@ import winston from "winston";
 import path from "path";
 import fs from "fs";
 
-import formats from "./formats";
+import formats, { GradientStyle } from "./formats";
 import Metadata, { HeadIdentity } from "./metadata";
 import { config_or_error } from "./util/config";
 import logger_config from "./util/logger";
@@ -53,18 +53,30 @@ export default (metadata: Metadata) => {
         return res.status(400).send(result.message);
       }
 
-      const badge = badgen({
-        label: "coverage",
-        status: Math.floor(coverage).toString() + "%",
-        //TODO @Metadata stage values should come from metadata
-        color: formatter.match_color(coverage, 95, 80)
-      });
-
       const report_path = path.join(HOST_DIR, org, repo, branch, commit);
 
       fs.promises
         .mkdir(report_path, { recursive: true })
-        .then(() =>
+        .then(
+          () =>
+            //TODO @Metadata stage values should come from metadata
+            new Promise<GradientStyle>(solv =>
+              solv({ stage_1: 95, stage_2: 80 })
+            )
+        )
+        .then(
+          style =>
+            new Promise(solv =>
+              solv(
+                badgen({
+                  label: "coverage",
+                  status: Math.floor(coverage).toString() + "%",
+                  color: formatter.match_color(coverage, style)
+                })
+              )
+            )
+        )
+        .then(badge =>
           fs.promises.writeFile(path.join(report_path, "badge.svg"), badge)
         )
         .then(() =>
