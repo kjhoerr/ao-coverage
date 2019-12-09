@@ -1,7 +1,7 @@
 import { Db } from "mongodb";
 import winston from "winston";
 
-import logger_config from "./util/logger";
+import loggerConfig from "./util/logger";
 import { BranchNotFoundError } from "./errors";
 
 interface Branch {
@@ -25,7 +25,7 @@ export interface Repository {
   branches: BranchList;
 }
 
-const logger = winston.createLogger(logger_config("META"));
+const logger = winston.createLogger(loggerConfig("META"));
 
 class Metadata {
   database: Db;

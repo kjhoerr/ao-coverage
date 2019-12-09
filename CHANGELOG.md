@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Eslint for linting
+- Formatting and linting scripts
+
 ### Changed
 
 - Script 'start' adopted to 'script:dev' with watching

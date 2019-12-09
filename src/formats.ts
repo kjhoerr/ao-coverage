@@ -1,9 +1,11 @@
 import { InvalidReportDocumentError } from "./errors";
 
+type CoverageResult = number | InvalidReportDocumentError;
+
 export interface Format {
   // returns the coverage value as %: Number(90.0), Number(100.0), Number(89.5)
-  parse_coverage: (file: Document) => number | InvalidReportDocumentError;
-  match_color: (coverage: number, style: GradientStyle) => string;
+  parseCoverage: (file: Document) => CoverageResult;
+  matchColor: (coverage: number, style: GradientStyle) => string;
 }
 
 interface FormatList {
@@ -12,37 +14,40 @@ interface FormatList {
 
 interface FormatObj {
   formats: FormatList;
-  list_formats: () => string[];
-  get_format: (format: string) => Format;
+  listFormats: () => string[];
+  getFormat: (format: string) => Format;
 }
 
 export interface GradientStyle {
-  stage_1: number;
-  stage_2: number;
+  stage1: number;
+  stage2: number;
 }
 
 // color is a gradient from green (>=stage_1) -> yellow (stage_2) -> red. Stage values should come from metadata.
-const default_color_matches = (coverage: number, style: GradientStyle) => {
+const defaultColorMatches = (
+  coverage: number,
+  style: GradientStyle
+): string => {
   const gradient =
-    coverage >= style.stage_1
+    coverage >= style.stage1
       ? 15
-      : coverage >= style.stage_2
-      ? (Math.floor(coverage) - style.stage_2) * 16 + 15
-      : 240 + Math.floor(coverage / (style.stage_2 / 15));
+      : coverage >= style.stage2
+      ? (Math.floor(coverage) - style.stage2) * 16 + 15
+      : 240 + Math.floor(coverage / (style.stage2 / 15));
   return gradient.toString(16) + "0";
 };
 
 const FormatsObj: FormatObj = {
   formats: {
     tarpaulin: {
-      parse_coverage: (file: Document) => {
+      parseCoverage: (file: Document): CoverageResult => {
         const scripts = file.getElementsByTagName("script");
         if (scripts.length == 0) {
           return new InvalidReportDocumentError();
         }
         const data = scripts[0].text;
-        const accumFunc = (regex: RegExp) => {
-          let acc: number = 0;
+        const accumFunc = (regex: RegExp): number => {
+          let acc = 0;
           while (true) {
             const match = regex.exec(data);
             if (match === null) break;
@@ -61,15 +66,15 @@ const FormatsObj: FormatObj = {
         }
         return (100 * covered) / coverable;
       },
-      match_color: default_color_matches
+      matchColor: defaultColorMatches
     }
   },
 
-  list_formats: function() {
+  listFormats: function() {
     return Object.keys(this.formats);
   },
 
-  get_format: function(format: string) {
+  getFormat: function(format: string) {
     return this.formats[format];
   }
 };

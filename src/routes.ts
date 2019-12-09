@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Router } from "express";
 import { JSDOM } from "jsdom";
 import { badgen } from "badgen";
 import winston from "winston";
@@ -7,18 +7,18 @@ import fs from "fs";
 
 import formats, { GradientStyle } from "./formats";
 import Metadata, { HeadIdentity } from "./metadata";
-import { config_or_error } from "./util/config";
-import logger_config from "./util/logger";
+import { configOrError } from "./util/config";
+import loggerConfig from "./util/logger";
 import { Messages } from "./errors";
 
 const TOKEN = process.env.TOKEN || "";
 const UPLOAD_LIMIT = Number(process.env.UPLOAD_LIMIT || 4194304);
-const HOST_DIR = config_or_error("HOST_DIR");
+const HOST_DIR = configOrError("HOST_DIR");
 
-const logger = winston.createLogger(logger_config("HTTP"));
+const logger = winston.createLogger(loggerConfig("HTTP"));
 
-export default (metadata: Metadata) => {
-  const router = express.Router();
+export default (metadata: Metadata): Router => {
+  const router = Router();
 
   // Upload HTML file
   router.post("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
@@ -30,11 +30,11 @@ export default (metadata: Metadata) => {
       return res.status(401).send(Messages.InvalidToken);
     }
 
-    if (!formats.list_formats().includes(format)) {
+    if (!formats.listFormats().includes(format)) {
       return res.status(406).send(Messages.InvalidFormat);
     }
 
-    var contents = "";
+    let contents = "";
     req.on("data", raw => {
       if (contents.length + raw.length > UPLOAD_LIMIT) {
         res.status(413).send(Messages.FileTooLarge);
@@ -45,24 +45,23 @@ export default (metadata: Metadata) => {
     req.on("end", () => {
       let coverage: number;
       const doc = new JSDOM(contents).window.document;
-      const formatter = formats.get_format(format);
-      const result = formatter.parse_coverage(doc);
+      const formatter = formats.getFormat(format);
+
+      const result = formatter.parseCoverage(doc);
       if (typeof result === "number") {
         coverage = result;
       } else {
         return res.status(400).send(result.message);
       }
 
-      const report_path = path.join(HOST_DIR, org, repo, branch, commit);
+      const reportPath = path.join(HOST_DIR, org, repo, branch, commit);
 
       fs.promises
-        .mkdir(report_path, { recursive: true })
+        .mkdir(reportPath, { recursive: true })
         .then(
           () =>
             //TODO @Metadata stage values should come from metadata
-            new Promise<GradientStyle>(solv =>
-              solv({ stage_1: 95, stage_2: 80 })
-            )
+            new Promise<GradientStyle>(solv => solv({ stage1: 95, stage2: 80 }))
         )
         .then(
           style =>
@@ -71,16 +70,16 @@ export default (metadata: Metadata) => {
                 badgen({
                   label: "coverage",
                   status: Math.floor(coverage).toString() + "%",
-                  color: formatter.match_color(coverage, style)
+                  color: formatter.matchColor(coverage, style)
                 })
               )
             )
         )
         .then(badge =>
-          fs.promises.writeFile(path.join(report_path, "badge.svg"), badge)
+          fs.promises.writeFile(path.join(reportPath, "badge.svg"), badge)
         )
         .then(() =>
-          fs.promises.writeFile(path.join(report_path, "index.html"), contents)
+          fs.promises.writeFile(path.join(reportPath, "index.html"), contents)
         )
         .then(() =>
           metadata.updateBranch({
@@ -98,11 +97,11 @@ export default (metadata: Metadata) => {
     });
   });
 
-  const retrieve_file = (
+  const retrieveFile = (
     res: express.Response,
     identity: HeadIdentity,
     file: string
-  ) => {
+  ): void => {
     const { organization: org, repository: repo, branch, head } = identity;
 
     const pathname = path.join(HOST_DIR, org, repo, branch, head, file);
@@ -125,7 +124,7 @@ export default (metadata: Metadata) => {
             branch,
             head: result.toString()
           };
-          retrieve_file(res, identity, "badge.svg");
+          retrieveFile(res, identity, "badge.svg");
         } else {
           res.status(404).send(result.message);
         }
@@ -149,7 +148,7 @@ export default (metadata: Metadata) => {
             branch,
             head: result.toString()
           };
-          retrieve_file(res, identity, "index.html");
+          retrieveFile(res, identity, "index.html");
         } else {
           res.status(404).send(result.message);
         }
@@ -170,7 +169,7 @@ export default (metadata: Metadata) => {
       branch,
       head: commit
     };
-    retrieve_file(res, identity, "badge.svg");
+    retrieveFile(res, identity, "badge.svg");
   });
 
   // provide hard link for commit
@@ -182,7 +181,7 @@ export default (metadata: Metadata) => {
       branch,
       head: commit
     };
-    retrieve_file(res, identity, "index.html");
+    retrieveFile(res, identity, "index.html");
   });
 
   return router;

@@ -2,23 +2,23 @@ import winston from "winston";
 import { MongoClient } from "mongodb";
 import { Server } from "http";
 
-import logger_config from "./logger";
+import loggerConfig from "./logger";
 
-const logger = winston.createLogger(logger_config("ROOT"));
+const logger = winston.createLogger(loggerConfig("ROOT"));
 
-export const config_or_error = (var_name: string) => {
-  if (!process.env[var_name]) {
-    logger.error("%s must be defined", var_name);
+export const configOrError = (varName: string): string => {
+  if (!process.env[varName]) {
+    logger.error("%s must be defined", varName);
     process.exit(1);
     return "";
   } else {
-    return process.env[var_name] || "";
+    return process.env[varName] || "";
   }
 };
 
-export const handle_shutdown = (mongo: MongoClient, server: Server) => (
+export const handleShutdown = (mongo: MongoClient, server: Server) => (
   signal: NodeJS.Signals
-) => {
+): void => {
   logger.warn("%s signal received. Closing shop.", signal);
 
   mongo

@@ -11,18 +11,18 @@ dotenv.config();
 
 import routes from "./routes";
 import Metadata from "./metadata";
-import logger_config from "./util/logger";
-import { config_or_error, handle_shutdown } from "./util/config";
+import loggerConfig from "./util/logger";
+import { configOrError, handleShutdown } from "./util/config";
 
 // Start-up configuration
 const BIND_ADDRESS = process.env.BIND_ADDRESS || "localhost";
 const PORT = Number(process.env.PORT || 3000);
 
-const logger = winston.createLogger(logger_config("ROOT"));
+const logger = winston.createLogger(loggerConfig("ROOT"));
 
-const MONGO_URI = config_or_error("MONGO_URI");
+const MONGO_URI = configOrError("MONGO_URI");
 const MONGO_DB = process.env.MONGO_DB || "ao-coverage";
-const HOST_DIR = config_or_error("HOST_DIR");
+const HOST_DIR = configOrError("HOST_DIR");
 
 fs.accessSync(HOST_DIR, fs.constants.R_OK | fs.constants.W_OK);
 if (!path.isAbsolute(HOST_DIR)) {
@@ -42,7 +42,7 @@ new MongoClient(MONGO_URI, { useUnifiedTopology: true }).connect(
 
     app.use(
       expressWinston.logger({
-        ...logger_config("HTTP"),
+        ...loggerConfig("HTTP"),
         colorize: true,
         // filter out token query param from URL
         msg:
@@ -53,16 +53,16 @@ new MongoClient(MONGO_URI, { useUnifiedTopology: true }).connect(
     // actual app routes
     app.use(routes(metadata));
 
-    app.use(expressWinston.errorLogger(logger_config("_ERR")));
+    app.use(expressWinston.errorLogger(loggerConfig("_ERR")));
 
     const server = app.listen(PORT, BIND_ADDRESS, () => {
       logger.info("Express has started: http://%s:%d/", BIND_ADDRESS, PORT);
     });
 
     // application exit handling
-    const handle_codes: NodeJS.Signals[] = ["SIGTERM", "SIGHUP", "SIGINT"];
-    handle_codes.map((code: NodeJS.Signals) => {
-      process.on(code, handle_shutdown(mongo, server));
+    const signalCodes: NodeJS.Signals[] = ["SIGTERM", "SIGHUP", "SIGINT"];
+    signalCodes.map((code: NodeJS.Signals) => {
+      process.on(code, handleShutdown(mongo, server));
     });
   }
 );
