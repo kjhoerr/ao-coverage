@@ -20,6 +20,14 @@ const logger = winston.createLogger(loggerConfig("HTTP"));
 export default (metadata: Metadata): Router => {
   const router = Router();
 
+  // serve script for posting coverage report
+  router.use(
+    "/bash",
+    express.static(path.join(HOST_DIR, "bash"), {
+      setHeaders: res => res.contentType("text/plain")
+    })
+  );
+
   // Upload HTML file
   router.post("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
     const { org, repo, branch, commit } = req.params;

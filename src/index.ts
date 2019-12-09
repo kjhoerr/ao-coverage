@@ -30,6 +30,9 @@ if (!path.isAbsolute(HOST_DIR)) {
   process.exit(1);
 }
 
+// prepare template files
+require("./templates");
+
 new MongoClient(MONGO_URI, { useUnifiedTopology: true }).connect(
   (err, mongo) => {
     if (err !== null) {

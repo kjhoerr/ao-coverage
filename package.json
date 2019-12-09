@@ -9,7 +9,7 @@
   "main": "build/index.js",
   "scripts": {
     "start:dev": "tsc-watch --onSuccess \"node ./build/index.js\"",
-    "format": "prettier --write src/**/*.ts",
+    "format": "prettier --write 'src/**/*.ts'",
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint --fix 'src/**/*.ts'",
     "tsc": "tsc"
@@ -24,6 +24,7 @@
     "dotenv": "8.2.0",
     "express": "4.17.1",
     "express-winston": "^4.0.1",
+    "handlebars": "^4.5.3",
     "jsdom": "^15.2.1",
     "mongodb": "^3.3.5",
     "typescript": "^3.7.3",

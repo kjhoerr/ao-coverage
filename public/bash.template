@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+# ISC License
+# The full version of this license can be found here:
+# https://git.submelon.dev/kjhoerr/ao-coverage/raw/branch/trunk/LICENSE
+
+url="{{TARGET_URL}}"
+commit=""
+branch=""
+repo=""
+format="tarpaulin"
+report=""
+token="$COV_TOKEN"
+
+if [[ "$CI" -eq "drone" ]]; then
+  commit="$DRONE_COMMIT"
+  branch="$DRONE_BRANCH"
+  repo="$DRONE_REPO"
+else
+  commit="$VCS_COMMIT"
+  branch="$VCS_BRANCH"
+  repo="$VCS_REPO"
+fi
+
+if [[ "$format" -eq "tarpaulin" ]]; then
+  report="${REPORT_FILE:-tarpaulin-report.html}"
+fi
+
+if [[ ! -f "$report" ]]; then
+  echo "Report file could not be found."
+  exit 1
+fi
+
+curl -X POST --data-binary "@$report" -H 'Content-Type: text/html' "$url/v1/$repo/$branch/$commit.html?token=$token&format=tarpaulin"
