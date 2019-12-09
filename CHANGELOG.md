@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Script 'start' adopted to 'script:dev' with watching
+
 ## [0.2.1]
 
 ### Added

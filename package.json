@@ -8,7 +8,7 @@
   },
   "main": "build/index.js",
   "scripts": {
-    "start": "tsc && node ./build/index.js",
+    "start:dev": "tsc-watch --onSuccess \"node ./build/index.js\"",
     "tsc": "tsc"
   },
   "author": "Kevin J Hoerr <kjhoerr@submelon.tech>",
@@ -23,10 +23,11 @@
     "express-winston": "^4.0.1",
     "jsdom": "^15.2.1",
     "mongodb": "^3.3.5",
-    "typescript": "^3.7.2",
+    "typescript": "^3.7.3",
     "winston": "^3.2.1"
   },
   "devDependencies": {
-    "prettier": "^1.19.1"
+    "prettier": "^1.19.1",
+    "tsc-watch": "^4.0.0"
   }
 }
