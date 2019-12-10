@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scripts added: `start:dev` for integrated watcher, `start:prod` for running server as production
 - Formatting and linting scripts
 - Template file converter, and bash template for serving
+- Multi-stage dockerfile
 
 ### Changed
 
