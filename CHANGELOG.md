@@ -10,11 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Eslint for linting
+- Scripts added: `start:dev` for integrated watcher, `start:prod` for running server as production
 - Formatting and linting scripts
+- Template file converter, and bash template for serving
 
 ### Changed
 
-- Script 'start' adopted to 'script:dev' with watching
+- Relicensed project under the Parity Public License 7.0.0
+- Ensure process exits with error code if error occurred during shutdown
 
 ## [0.2.1]
 

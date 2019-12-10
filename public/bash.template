@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# ISC License
+# Licensed under Parity Public License 7.0.0
 # The full version of this license can be found here:
-# https://git.submelon.dev/kjhoerr/ao-coverage/raw/branch/trunk/LICENSE
+# https://git.submelon.dev/kjhoerr/ao-coverage/raw/branch/trunk/LICENSE.md
 
 url="{{TARGET_URL}}"
 commit=""

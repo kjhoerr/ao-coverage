@@ -32,7 +32,6 @@ export const handleShutdown = (mongo: MongoClient, server: Server) => (
         })
       );
     })
-    .finally(() => {
-      process.exit(0);
-    });
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
 };
