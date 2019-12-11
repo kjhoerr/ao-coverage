@@ -1,0 +1,352 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>html, body {
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+  margin: 10px;
+  padding: 0;
+}
+
+.files-list {
+  margin: 10px 0 0;
+  width: 100%;
+  border-collapse: collapse;
+}
+.files-list__head {
+  border: 1px solid #999;
+}
+.files-list__head > tr > th {
+  padding: 10px;
+  border: 1px solid #999;
+  text-align: left;
+  font-weight: normal;
+  background: #ddd;
+}
+.files-list__body {
+}
+.files-list__file {
+  cursor: pointer;
+}
+.files-list__file:hover {
+  background: #ccf;
+}
+.files-list__file > td {
+  padding: 10px;
+  border: 1px solid #999;
+}
+.files-list__file > td:first-child::before {
+  content: '\01F4C4';
+  margin-right: 1em;
+}
+.files-list__file_low {
+  background: #fcc;
+}
+.files-list__file_medium {
+  background: #ffc;
+}
+.files-list__file_high {
+  background: #cfc;
+}
+.files-list__file_folder > td:first-child::before {
+  content: '\01F4C1';
+  margin-right: 1em;
+}
+
+.file-header {
+  border: 1px solid #999;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.file-header__back {
+  margin: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  flex-grow: 0;
+  text-decoration: underline;
+  color: #338;
+}
+
+.file-header__name {
+  margin: 10px;
+  flex-shrink: 2;
+  flex-grow: 2;
+}
+
+.file-header__stat {
+  margin: 10px;
+  flex-shrink: 0;
+  flex-grow: 0;
+}
+
+.file-content {
+  margin: 10px 0 0;
+  border: 1px solid #999;
+  padding: 10px;
+}
+
+.code-line {
+  margin: 0;
+  padding: 0.3em;
+  height: 1em;
+}
+.code-line_covered {
+  background: #cfc;
+}
+.code-line_uncovered {
+  background: #fcc;
+}
+</style>
+</head>
+<body>
+    <div id="root"></div>
+    <script>var data = {"files":[{"path":["/","home","khoerr","prj","august-offensive","src","messages","callback.rs"],"content":"use messages::Message;\nuse std::collections::HashMap;\n\n#[derive(Clone, Debug, Deserialize, Serialize)]\npub struct Callback {\n    pub path: Vec\u003cString\u003e,\n    pub request: String,\n    pub content: HashMap\u003cString, String\u003e,\n}\n\nimpl Message for Callback {\n    fn name(\u0026self) -\u003e String {\n        String::from(\"CALLBACK\")\n    }\n}\n\nimpl PartialEq for Callback {\n    fn eq(\u0026self, other: \u0026Self) -\u003e bool {\n        self.request == other.request \u0026\u0026 self.path == other.path \u0026\u0026 self.content == other.content\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn test_name() {\n        // Arrange\n        let query = HashMap::new();\n        let message = Callback {\n            path: vec![],\n            request: String::from(\"GET\"),\n            content: query,\n        };\n\n        // Act\n        let name = message.name();\n\n        // Assert\n        assert_eq!(name, \"CALLBACK\");\n    }\n\n    #[test]\n    fn test_asoutgoing() {\n        // Arrange\n        let message = Callback {\n            path: vec![],\n            request: String::from(\"GET\"),\n            content: HashMap::new(),\n        };\n        let message_ref = message.clone();\n\n        // Act\n        let outgoing = message.as_outgoing();\n\n        // Assert\n        assert_eq!(outgoing.result_type, \"CALLBACK\");\n        assert_eq!(outgoing.content, message_ref);\n    }\n}\n","traces":[{"line":12,"address":4508880,"length":1,"stats":{"Line":1}},{"line":18,"address":4508928,"length":1,"stats":{"Line":1}},{"line":19,"address":4508942,"length":1,"stats":{"Line":1}},{"line":28,"address":5063760,"length":1,"stats":{"Line":2}},{"line":30,"address":5063767,"length":1,"stats":{"Line":1}},{"line":31,"address":5063977,"length":1,"stats":{"Line":1}},{"line":32,"address":5063819,"length":1,"stats":{"Line":1}},{"line":33,"address":5063875,"length":1,"stats":{"Line":1}},{"line":34,"address":5063917,"length":1,"stats":{"Line":1}},{"line":38,"address":5064121,"length":1,"stats":{"Line":1}},{"line":41,"address":5064136,"length":1,"stats":{"Line":1}},{"line":45,"address":5064736,"length":1,"stats":{"Line":2}},{"line":47,"address":5064747,"length":1,"stats":{"Line":1}},{"line":48,"address":5064755,"length":1,"stats":{"Line":1}},{"line":49,"address":5064803,"length":1,"stats":{"Line":1}},{"line":50,"address":5064853,"length":1,"stats":{"Line":1}},{"line":52,"address":5065006,"length":1,"stats":{"Line":1}},{"line":55,"address":5065031,"length":1,"stats":{"Line":1}},{"line":58,"address":5065198,"length":1,"stats":{"Line":1}},{"line":59,"address":5065322,"length":1,"stats":{"Line":1}}],"covered":20,"coverable":20},{"path":["/","home","khoerr","prj","august-offensive","src","messages","mod.rs"],"content":"use std::marker::Sized;\n\npub mod callback;\npub mod not_understood;\n\npub use self::callback::Callback;\npub use self::not_understood::NotUnderstood;\n\n#[derive(Deserialize, Serialize)]\npub struct OutgoingMsg\u003cT: Message\u003e {\n    pub result_type: String,\n    pub content: T,\n}\n\npub trait Message {\n    fn name(\u0026self) -\u003e String;\n    fn as_outgoing(self) -\u003e OutgoingMsg\u003cSelf\u003e\n    where\n        Self: Sized,\n    {\n        OutgoingMsg {\n            result_type: self.name(),\n            content: self,\n        }\n    }\n}\n","traces":[{"line":17,"address":4304128,"length":1,"stats":{"Line":2}},{"line":21,"address":4304224,"length":1,"stats":{"Line":2}},{"line":22,"address":4304148,"length":1,"stats":{"Line":2}},{"line":23,"address":4304183,"length":1,"stats":{"Line":2}}],"covered":4,"coverable":4},{"path":["/","home","khoerr","prj","august-offensive","src","messages","not_understood.rs"],"content":"use messages::Message;\n\n#[derive(Clone, Debug, Deserialize, Serialize)]\npub struct NotUnderstood {\n    pub path: Vec\u003cString\u003e,\n}\n\nimpl Message for NotUnderstood {\n    fn name(\u0026self) -\u003e String {\n        String::from(\"NOT_UNDERSTOOD\")\n    }\n}\n\nimpl PartialEq for NotUnderstood {\n    fn eq(\u0026self, other: \u0026Self) -\u003e bool {\n        self.path == other.path\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn test_name() {\n        // Arrange\n        let message = NotUnderstood { path: vec![] };\n\n        // Act\n        let name = message.name();\n\n        // Assert\n        assert_eq!(name, \"NOT_UNDERSTOOD\");\n    }\n\n    #[test]\n    fn test_asoutgoing() {\n        // Arrange\n        let message = NotUnderstood { path: vec![] };\n        let message_ref = message.clone();\n\n        // Act\n        let outgoing = message.as_outgoing();\n\n        // Assert\n        assert_eq!(outgoing.result_type, \"NOT_UNDERSTOOD\");\n        assert_eq!(outgoing.content, message_ref);\n    }\n}\n","traces":[{"line":9,"address":4437040,"length":1,"stats":{"Line":1}},{"line":15,"address":4437088,"length":1,"stats":{"Line":1}},{"line":16,"address":4437102,"length":1,"stats":{"Line":1}},{"line":25,"address":4881744,"length":1,"stats":{"Line":2}},{"line":27,"address":4888427,"length":1,"stats":{"Line":1}},{"line":30,"address":4888502,"length":1,"stats":{"Line":1}},{"line":33,"address":4888514,"length":1,"stats":{"Line":1}},{"line":37,"address":4881776,"length":1,"stats":{"Line":2}},{"line":39,"address":4889035,"length":1,"stats":{"Line":1}},{"line":40,"address":4889141,"length":1,"stats":{"Line":1}},{"line":43,"address":4889148,"length":1,"stats":{"Line":1}},{"line":46,"address":4889235,"length":1,"stats":{"Line":1}},{"line":47,"address":4889359,"length":1,"stats":{"Line":1}}],"covered":13,"coverable":13},{"path":["/","home","khoerr","prj","august-offensive","src","routes","callback.rs"],"content":"use routes::*;\n\n// Sends Callback message with information from HttpRequest.\npub fn callback(req: HttpRequest, query: Query\u003cHashMap\u003cString, String\u003e\u003e) -\u003e JsonMessage\u003cCallback\u003e {\n    let path = req.path();\n    let method = req.method().as_str();\n\n    let callback = Callback {\n        path: destruct_path(path),\n        request: String::from(method),\n        content: query.into_inner(),\n    };\n\n    Ok(FormatMsg::ok(callback.as_outgoing()))\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use routes::tests::*;\n    use actix_web::http::Method;\n\n    #[test]\n    fn test_callback_get() {\n        // Arrange\n        let uri = \"/api/phpmyadmin/index.rs\";\n        let req = gen_request(uri, None);\n\n        let mut ref_map = HashMap::new();\n        ref_map.insert(\"hello\".to_string(), \"world\".to_string());\n        ref_map.insert(\"id\".to_string(), \"10011\".to_string());\n        let query = gen_query(\u0026ref_map);\n\n        // Act\n        let result = callback(req, query);\n\n        // Assert\n        assert!(result.is_ok());\n\n        let val = result.unwrap().into_inner();\n        assert_eq!(val.result_type, \"CALLBACK\");\n        assert_eq!(val.content.path, vec![\"api\", \"phpmyadmin\", \"index.rs\"]);\n        assert_eq!(val.content.request, \"GET\");\n        assert_eq!(val.content.content, ref_map);\n    }\n\n    #[test]\n    fn test_callback_post() {\n        // Arrange\n        let uri = \"/api/phpmyadmin/index.rs\";\n        let req = gen_request(uri, Some(Method::POST));\n\n        let mut ref_map = HashMap::new();\n        ref_map.insert(\"hello\".to_string(), \"world\".to_string());\n        ref_map.insert(\"id\".to_string(), \"10012\".to_string());\n        let query = gen_query(\u0026ref_map);\n\n        // Act\n        let result = callback(req, query);\n\n        // Assert\n        assert!(result.is_ok());\n\n        let val = result.unwrap().into_inner();\n        assert_eq!(val.result_type, \"CALLBACK\");\n        assert_eq!(val.content.path, vec![\"api\", \"phpmyadmin\", \"index.rs\"]);\n        assert_eq!(val.content.request, \"POST\");\n        assert_eq!(val.content.content, ref_map);\n    }\n\n    #[test]\n    fn test_callback_blank() {\n        // Arrange\n        let uri = \"/\";\n        let req = gen_request(uri, None);\n        let query = Query::from_query(\"\").unwrap();\n\n        // Act\n        let result = callback(req, query);\n\n        // Assert\n        assert!(result.is_ok());\n\n        let val = result.unwrap().into_inner();\n        assert_eq!(val.result_type, \"CALLBACK\");\n        assert!(val.content.path.is_empty());\n        assert_eq!(val.content.request, \"GET\");\n        assert!(val.content.content.is_empty());\n    }\n}","traces":[{"line":4,"address":4675328,"length":1,"stats":{"Line":1}},{"line":5,"address":4675343,"length":1,"stats":{"Line":1}},{"line":6,"address":4675439,"length":1,"stats":{"Line":1}},{"line":8,"address":4675656,"length":1,"stats":{"Line":1}},{"line":9,"address":4675505,"length":1,"stats":{"Line":1}},{"line":10,"address":4675530,"length":1,"stats":{"Line":1}},{"line":11,"address":4675555,"length":1,"stats":{"Line":1}},{"line":14,"address":4675781,"length":1,"stats":{"Line":1}},{"line":24,"address":4958592,"length":1,"stats":{"Line":2}},{"line":26,"address":4958606,"length":1,"stats":{"Line":1}},{"line":27,"address":4958658,"length":1,"stats":{"Line":1}},{"line":29,"address":4958736,"length":1,"stats":{"Line":1}},{"line":30,"address":4958743,"length":1,"stats":{"Line":1}},{"line":31,"address":4958893,"length":1,"stats":{"Line":1}},{"line":32,"address":4959041,"length":1,"stats":{"Line":1}},{"line":35,"address":4959048,"length":1,"stats":{"Line":1}},{"line":38,"address":4959167,"length":1,"stats":{"Line":1}},{"line":40,"address":4959194,"length":1,"stats":{"Line":1}},{"line":41,"address":4959338,"length":1,"stats":{"Line":1}},{"line":42,"address":4959460,"length":1,"stats":{"Line":1}},{"line":43,"address":4960388,"length":1,"stats":{"Line":1}},{"line":44,"address":4960488,"length":1,"stats":{"Line":1}},{"line":48,"address":4961568,"length":1,"stats":{"Line":2}},{"line":50,"address":4961582,"length":1,"stats":{"Line":1}},{"line":51,"address":4961634,"length":1,"stats":{"Line":1}},{"line":53,"address":4961749,"length":1,"stats":{"Line":1}},{"line":54,"address":4961756,"length":1,"stats":{"Line":1}},{"line":55,"address":4961906,"length":1,"stats":{"Line":1}},{"line":56,"address":4962054,"length":1,"stats":{"Line":1}},{"line":59,"address":4962061,"length":1,"stats":{"Line":1}},{"line":62,"address":4962180,"length":1,"stats":{"Line":1}},{"line":64,"address":4962207,"length":1,"stats":{"Line":1}},{"line":65,"address":4962351,"length":1,"stats":{"Line":1}},{"line":66,"address":4962473,"length":1,"stats":{"Line":1}},{"line":67,"address":4963401,"length":1,"stats":{"Line":1}},{"line":68,"address":4963501,"length":1,"stats":{"Line":1}},{"line":72,"address":4964592,"length":1,"stats":{"Line":2}},{"line":74,"address":4964606,"length":1,"stats":{"Line":1}},{"line":75,"address":4964642,"length":1,"stats":{"Line":1}},{"line":76,"address":4964712,"length":1,"stats":{"Line":1}},{"line":79,"address":4964761,"length":1,"stats":{"Line":1}},{"line":82,"address":4964880,"length":1,"stats":{"Line":1}},{"line":84,"address":4964907,"length":1,"stats":{"Line":1}},{"line":85,"address":4965042,"length":1,"stats":{"Line":1}},{"line":86,"address":4965154,"length":1,"stats":{"Line":1}},{"line":87,"address":4965500,"length":1,"stats":{"Line":1}},{"line":88,"address":4965633,"length":1,"stats":{"Line":1}}],"covered":47,"coverable":47},{"path":["/","home","khoerr","prj","august-offensive","src","routes","format_msg.rs"],"content":"use actix_web::{http::StatusCode, Error, HttpRequest, HttpResponse, Responder};\nuse serde::Serialize;\n\npub struct FormatMsg\u003cT\u003e {\n    pub message: T,\n    pub code: StatusCode,\n}\n\nimpl\u003cT\u003e FormatMsg\u003cT\u003e {\n    /// Deconstruct to an inner value\n    pub fn into_inner(self) -\u003e T {\n        self.message\n    }\n\n    pub fn ok(message: T) -\u003e Self {\n        FormatMsg {\n            message: message,\n            code: StatusCode::OK,\n        }\n    }\n}\n\nimpl\u003cT: Serialize\u003e Responder for FormatMsg\u003cT\u003e {\n    type Error = Error;\n    type Future = Result\u003cHttpResponse, Error\u003e;\n\n    fn respond_to(self, _: \u0026HttpRequest) -\u003e Self::Future {\n        let body = match serde_json::to_string(\u0026self.message) {\n            Ok(body) =\u003e body,\n            Err(e) =\u003e return Err(e.into()),\n        };\n\n        Ok(HttpResponse::build(self.code)\n            .content_type(\"application/json\")\n            .body(body))\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use routes::*;\n    use routes::tests::*;\n    use serde::ser::{Error, Serializer};\n\n    #[test]\n    fn test_into_inner() {\n        // Arrange\n        let msg = NotUnderstood {path: vec![]};\n        let msg_ref = msg.clone();\n        let formatted = FormatMsg {\n            message: msg.as_outgoing(),\n            code: StatusCode::OK,\n        };\n\n        // Act\n        let result = formatted.into_inner();\n\n        // Assert\n        assert_eq!(result.result_type, \"NOT_UNDERSTOOD\");\n        assert_eq!(result.content, msg_ref);\n    }\n\n    #[test]\n    fn test_ok() {\n        // Arrange\n        let msg = NotUnderstood {path: vec![]};\n        let msg_ref = msg.clone();\n\n        // Act\n        let result = FormatMsg::ok(msg);\n\n        // Assert\n        assert_eq!(result.message, msg_ref);\n        assert_eq!(result.code, StatusCode::OK);\n    }\n\n    #[test]\n    fn test_responder() {\n        // Arrange\n        let msg = NotUnderstood {path: vec![]};\n        let msg_ref = msg.clone();\n        let formatted = FormatMsg {\n            message: msg,\n            code: StatusCode::NOT_FOUND,\n        };\n        let request = gen_request(\"/api/404\", None);\n\n        // Act\n        let result = \u0026formatted.respond_to(\u0026request).unwrap();\n\n        // Assert\n        assert_eq!(result.status(), StatusCode::NOT_FOUND);\n        assert_eq!(result.headers().get(\"content-type\").unwrap(), \"application/json\");\n\n        let content = get_message::\u003cNotUnderstood\u003e(result);\n        assert_eq!(content, msg_ref);\n    }\n\n    struct InvalidMessage {}\n\n    impl Serialize for InvalidMessage {\n        fn serialize\u003cS\u003e(\u0026self, _: S) -\u003e Result\u003cS::Ok, S::Error\u003e where S: Serializer {\n            Err(Error::custom(\"oops\".to_string()))\n        }\n    }\n\n    #[test]\n    fn test_responder_serde_error() {\n        // Arrange\n        let msg = InvalidMessage {};\n        let formatted = FormatMsg {\n            message: msg,\n            code: StatusCode::NOT_FOUND,\n        };\n        let request = gen_request(\"/api/404\", None);\n\n        // Act\n        let result = formatted.respond_to(\u0026request);\n\n        // Assert\n        assert!(result.is_err());\n    }\n}","traces":[{"line":11,"address":4437536,"length":1,"stats":{"Line":2}},{"line":12,"address":4437540,"length":1,"stats":{"Line":2}},{"line":15,"address":4437600,"length":1,"stats":{"Line":2}},{"line":27,"address":4437792,"length":1,"stats":{"Line":4}},{"line":28,"address":4437807,"length":1,"stats":{"Line":4}},{"line":29,"address":4437860,"length":1,"stats":{"Line":4}},{"line":30,"address":4437993,"length":1,"stats":{"Line":1}},{"line":33,"address":4438091,"length":1,"stats":{"Line":3}},{"line":34,"address":null,"length":0,"stats":{"Line":0}},{"line":35,"address":4438149,"length":1,"stats":{"Line":3}},{"line":47,"address":4267536,"length":1,"stats":{"Line":2}},{"line":49,"address":4267547,"length":1,"stats":{"Line":1}},{"line":50,"address":4267653,"length":1,"stats":{"Line":1}},{"line":51,"address":4267739,"length":1,"stats":{"Line":1}},{"line":52,"address":4267660,"length":1,"stats":{"Line":1}},{"line":57,"address":4267797,"length":1,"stats":{"Line":1}},{"line":60,"address":4267910,"length":1,"stats":{"Line":1}},{"line":61,"address":4268022,"length":1,"stats":{"Line":1}},{"line":65,"address":4268880,"length":1,"stats":{"Line":2}},{"line":67,"address":4268891,"length":1,"stats":{"Line":1}},{"line":68,"address":4268997,"length":1,"stats":{"Line":1}},{"line":71,"address":4269004,"length":1,"stats":{"Line":1}},{"line":74,"address":4269091,"length":1,"stats":{"Line":1}},{"line":75,"address":4269216,"length":1,"stats":{"Line":1}},{"line":79,"address":4270064,"length":1,"stats":{"Line":2}},{"line":81,"address":4270075,"length":1,"stats":{"Line":1}},{"line":82,"address":4270195,"length":1,"stats":{"Line":1}},{"line":83,"address":4270242,"length":1,"stats":{"Line":1}},{"line":84,"address":4270202,"length":1,"stats":{"Line":1}},{"line":87,"address":4270292,"length":1,"stats":{"Line":1}},{"line":90,"address":4270385,"length":1,"stats":{"Line":1}},{"line":93,"address":4270526,"length":1,"stats":{"Line":1}},{"line":94,"address":4270686,"length":1,"stats":{"Line":1}},{"line":96,"address":4271226,"length":1,"stats":{"Line":1}},{"line":97,"address":4271566,"length":1,"stats":{"Line":1}},{"line":103,"address":4512448,"length":1,"stats":{"Line":1}},{"line":104,"address":4512462,"length":1,"stats":{"Line":1}},{"line":109,"address":4272224,"length":1,"stats":{"Line":2}},{"line":112,"address":4272238,"length":1,"stats":{"Line":1}},{"line":116,"address":4272245,"length":1,"stats":{"Line":1}},{"line":119,"address":4272290,"length":1,"stats":{"Line":1}},{"line":122,"address":4272317,"length":1,"stats":{"Line":1}}],"covered":41,"coverable":42},{"path":["/","home","khoerr","prj","august-offensive","src","routes","mod.rs"],"content":"use actix_web::{web::{route, scope, Query}, HttpRequest, Result, Scope};\nuse actix_web::http::StatusCode;\nuse messages::*;\nuse std::collections::HashMap;\n\npub mod format_msg;\nmod callback;\nmod not_understood;\n\npub use self::format_msg::FormatMsg;\nuse self::callback::callback;\nuse self::not_understood::not_understood;\n\ntype JsonMessage\u003cU\u003e = Result\u003cFormatMsg\u003cOutgoingMsg\u003cU\u003e\u003e\u003e;\n\n// Provides the routes for the application\npub fn get_scope() -\u003e Scope {\n    scope(\"/api\")\n        .service(scope(\"/callback\").default_service(route().to(callback)))\n        .default_service(route().to(not_understood))\n}\n\n// Takes an HttpRequest path and splits it into an array.\nfn destruct_path(path: \u0026str) -\u003e Vec\u003cString\u003e {\n    path.split_terminator(\"/\")\n        // first element is always blank due to link starting with \"/api\"\n        .skip(1)\n        .map(String::from)\n        .collect::\u003cVec\u003cString\u003e\u003e()\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use actix_web::{http::Method, test::TestRequest};\n    use actix_web::{App, dev::Service, test::{block_on, init_service}};\n    use actix_web::{HttpResponse, dev::Body};\n    use serde::Deserialize;\n    use std::str;\n\n    #[test]\n    fn test_get_scope_callback() {\n        // Arrange\n        let req = TestRequest::with_uri(\"/api/callback\").to_request();\n        let scope = get_scope();\n        let mut srv = init_service(App::new().service(scope));\n\n        // Act\n        let resp = \u0026block_on(srv.call(req)).unwrap();\n\n        // Assert\n        assert_eq!(resp.status(), StatusCode::OK);\n\n        let content = get_message::\u003cOutgoingMsg\u003cCallback\u003e\u003e(resp.response());\n        assert_eq!(content.result_type, \"CALLBACK\");\n        assert_eq!(content.content.path, vec![\"api\", \"callback\"]);\n    }\n\n    #[test]\n    fn test_get_scope_not_understood() {\n        // Arrange\n        let req = TestRequest::with_uri(\"/api/404\").to_request();\n        let scope = get_scope();\n        let mut srv = init_service(App::new().service(scope));\n\n        // Act\n        let resp = \u0026block_on(srv.call(req)).unwrap();\n\n        // Assert\n        assert_eq!(resp.status(), StatusCode::NOT_FOUND);\n\n        let content = get_message::\u003cOutgoingMsg\u003cNotUnderstood\u003e\u003e(resp.response());\n        assert_eq!(content.result_type, \"NOT_UNDERSTOOD\");\n        assert_eq!(content.content.path, vec![\"api\", \"404\"]);\n    }\n\n    #[test]\n    fn test_get_scope_blank() {\n        // Arrange\n        let req = TestRequest::with_uri(\"/\").to_request();\n        let scope = get_scope();\n        let mut srv = init_service(App::new().service(scope));\n\n        // Act\n        let resp = block_on(srv.call(req)).unwrap();\n\n        // Assert\n        assert_eq!(resp.status(), StatusCode::NOT_FOUND);\n    }\n\n    #[test]\n    fn test_destruct_path() {\n        // Arrange\n        let path = \"/api/storm/breaking\";\n\n        // Act\n        let result = destruct_path(path);\n\n        // Assert\n        assert_eq!(result, vec![\"api\", \"storm\", \"breaking\"]);\n    }\n\n    #[test]\n    fn test_destruct_path_blank() {\n        // Arrange\n        let path = \"/\";\n\n        // Act\n        let result = destruct_path(path);\n\n        // Assert\n        assert!(result.is_empty());\n    }\n\n    #[test]\n    fn test_destruct_path_empty() {\n        // Arrange\n        let path = \"\";\n\n        // Act\n        let result = destruct_path(path);\n\n        // Assert\n        assert!(result.is_empty());\n    }\n\n    pub fn gen_request(path: \u0026str, method: Option\u003cMethod\u003e) -\u003e HttpRequest {\n        TestRequest::with_uri(path)\n            .method(method.unwrap_or(Method::GET))\n            .to_http_request()\n    }\n\n    pub fn gen_query(map: \u0026HashMap\u003cString, String\u003e) -\u003e Query\u003cHashMap\u003cString, String\u003e\u003e {\n        let mut query_str = String::new();\n        for (key, val) in map.iter() {\n            query_str.push_str(\u0026format!(\"\u0026{}={}\", key, val));\n        }\n\n        Query::from_query(\u0026query_str).unwrap()\n    }\n\n    pub fn get_message\u003c'a, T: Deserialize\u003c'a\u003e\u003e(response: \u0026'a HttpResponse) -\u003e T {\n        let body = response.body().as_ref().unwrap();\n        let mut array = \u0026[b'0';0][..];\n        match body {\n            Body::Bytes(b) =\u003e {\n                array = b.as_ref();\n            },\n            _ =\u003e {},\n        };\n\n        let van = str::from_utf8(array).unwrap();\n        serde_json::from_str(van).unwrap()\n    }\n}\n","traces":[{"line":17,"address":4969824,"length":1,"stats":{"Line":1}},{"line":18,"address":4969841,"length":1,"stats":{"Line":1}},{"line":20,"address":4970104,"length":1,"stats":{"Line":1}},{"line":24,"address":4970368,"length":1,"stats":{"Line":1}},{"line":25,"address":4970395,"length":1,"stats":{"Line":1}},{"line":42,"address":4448672,"length":1,"stats":{"Line":2}},{"line":44,"address":4448686,"length":1,"stats":{"Line":1}},{"line":45,"address":4448779,"length":1,"stats":{"Line":1}},{"line":46,"address":4448786,"length":1,"stats":{"Line":1}},{"line":49,"address":4448924,"length":1,"stats":{"Line":1}},{"line":52,"address":4449091,"length":1,"stats":{"Line":1}},{"line":54,"address":4449251,"length":1,"stats":{"Line":1}},{"line":55,"address":4449640,"length":1,"stats":{"Line":1}},{"line":56,"address":4449752,"length":1,"stats":{"Line":1}},{"line":60,"address":4450848,"length":1,"stats":{"Line":2}},{"line":62,"address":4450862,"length":1,"stats":{"Line":1}},{"line":63,"address":4450955,"length":1,"stats":{"Line":1}},{"line":64,"address":4450962,"length":1,"stats":{"Line":1}},{"line":67,"address":4451100,"length":1,"stats":{"Line":1}},{"line":70,"address":4451267,"length":1,"stats":{"Line":1}},{"line":72,"address":4451427,"length":1,"stats":{"Line":1}},{"line":73,"address":4451816,"length":1,"stats":{"Line":1}},{"line":74,"address":4451928,"length":1,"stats":{"Line":1}},{"line":78,"address":4453024,"length":1,"stats":{"Line":2}},{"line":80,"address":4453038,"length":1,"stats":{"Line":1}},{"line":81,"address":4453122,"length":1,"stats":{"Line":1}},{"line":82,"address":4453129,"length":1,"stats":{"Line":1}},{"line":85,"address":4453258,"length":1,"stats":{"Line":1}},{"line":88,"address":4453408,"length":1,"stats":{"Line":1}},{"line":92,"address":4454064,"length":1,"stats":{"Line":2}},{"line":94,"address":4454078,"length":1,"stats":{"Line":1}},{"line":97,"address":4454092,"length":1,"stats":{"Line":1}},{"line":100,"address":4454139,"length":1,"stats":{"Line":1}},{"line":104,"address":4454704,"length":1,"stats":{"Line":2}},{"line":106,"address":4454715,"length":1,"stats":{"Line":1}},{"line":109,"address":4454729,"length":1,"stats":{"Line":1}},{"line":112,"address":4454763,"length":1,"stats":{"Line":1}},{"line":116,"address":4454880,"length":1,"stats":{"Line":2}},{"line":118,"address":4454884,"length":1,"stats":{"Line":1}},{"line":121,"address":4454905,"length":1,"stats":{"Line":1}},{"line":124,"address":4454939,"length":1,"stats":{"Line":1}},{"line":127,"address":4447440,"length":1,"stats":{"Line":1}},{"line":128,"address":4447457,"length":1,"stats":{"Line":1}},{"line":133,"address":4447840,"length":1,"stats":{"Line":1}},{"line":134,"address":4447855,"length":1,"stats":{"Line":1}},{"line":135,"address":4447898,"length":1,"stats":{"Line":1}},{"line":136,"address":4448200,"length":1,"stats":{"Line":1}},{"line":139,"address":4448074,"length":1,"stats":{"Line":1}},{"line":142,"address":4557104,"length":1,"stats":{"Line":3}},{"line":143,"address":4557119,"length":1,"stats":{"Line":3}},{"line":144,"address":4557181,"length":1,"stats":{"Line":3}},{"line":146,"address":4557222,"length":1,"stats":{"Line":3}},{"line":147,"address":4557249,"length":1,"stats":{"Line":3}},{"line":152,"address":4557287,"length":1,"stats":{"Line":3}},{"line":153,"address":4557338,"length":1,"stats":{"Line":3}}],"covered":55,"coverable":55},{"path":["/","home","khoerr","prj","august-offensive","src","routes","not_understood.rs"],"content":"use routes::*;\n\n// Sends a default response message when requested an undefined resource.\npub fn not_understood(req: HttpRequest) -\u003e JsonMessage\u003cNotUnderstood\u003e {\n    let message = NotUnderstood {\n        path: destruct_path(req.path()),\n    };\n\n    Ok(FormatMsg {\n        message: message.as_outgoing(),\n        code: StatusCode::NOT_FOUND,\n    })\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use routes::tests::*;\n\n    #[test]\n    fn test_not_understood() {\n        // Arrange\n        let uri = \"/api/phpmyadmin/index.rs\";\n        let req = gen_request(uri, None);\n\n        // Act\n        let result = not_understood(req);\n\n        // Assert\n        assert!(result.is_ok());\n\n        let val = result.unwrap().into_inner();\n        assert_eq!(val.result_type, \"NOT_UNDERSTOOD\");\n        assert_eq!(val.content.path, vec![\"api\", \"phpmyadmin\", \"index.rs\"]);\n    }\n\n    #[test]\n    fn test_not_understood_blank() {\n        // Arrange\n        let uri = \"/\";\n        let req = gen_request(uri, None);\n\n        // Act\n        let result = not_understood(req);\n\n        // Assert\n        assert!(result.is_ok());\n\n        let val = result.unwrap().into_inner();\n        assert_eq!(val.result_type, \"NOT_UNDERSTOOD\");\n        assert!(val.content.path.is_empty());\n    }\n}","traces":[{"line":4,"address":4593632,"length":1,"stats":{"Line":1}},{"line":5,"address":4593731,"length":1,"stats":{"Line":1}},{"line":6,"address":4593657,"length":1,"stats":{"Line":1}},{"line":9,"address":4593800,"length":1,"stats":{"Line":1}},{"line":10,"address":4593751,"length":1,"stats":{"Line":1}},{"line":21,"address":4301424,"length":1,"stats":{"Line":2}},{"line":23,"address":4301438,"length":1,"stats":{"Line":1}},{"line":24,"address":4301463,"length":1,"stats":{"Line":1}},{"line":27,"address":4301522,"length":1,"stats":{"Line":1}},{"line":30,"address":4301559,"length":1,"stats":{"Line":1}},{"line":32,"address":4301580,"length":1,"stats":{"Line":1}},{"line":33,"address":4301739,"length":1,"stats":{"Line":1}},{"line":34,"address":4301855,"length":1,"stats":{"Line":1}},{"line":38,"address":4302848,"length":1,"stats":{"Line":2}},{"line":40,"address":4302862,"length":1,"stats":{"Line":1}},{"line":41,"address":4302884,"length":1,"stats":{"Line":1}},{"line":44,"address":4302931,"length":1,"stats":{"Line":1}},{"line":47,"address":4302959,"length":1,"stats":{"Line":1}},{"line":49,"address":4302980,"length":1,"stats":{"Line":1}},{"line":50,"address":4303133,"length":1,"stats":{"Line":1}},{"line":51,"address":4303245,"length":1,"stats":{"Line":1}}],"covered":21,"coverable":21},{"path":["/","home","khoerr","prj","august-offensive","src","schema.rs"],"content":"table! {\n    activation_keys (code) {\n        code -\u003e Varchar,\n        userid -\u003e Int4,\n    }\n}\n\ntable! {\n    allegiances (gameid, userid) {\n        gameid -\u003e Int4,\n        userid -\u003e Int4,\n        allegiance -\u003e Nullable\u003cVarchar\u003e,\n        ordernum -\u003e Int2,\n        playing -\u003e Nullable\u003cInt2\u003e,\n    }\n}\n\ntable! {\n    borders (nationid, borderid) {\n        nationid -\u003e Int4,\n        borderid -\u003e Int4,\n    }\n}\n\ntable! {\n    games (gameid) {\n        gameid -\u003e Int4,\n        title -\u003e Varchar,\n        gametypeid -\u003e Int4,\n        players -\u003e Int2,\n        waitfor -\u003e Int4,\n        lastturn -\u003e Nullable\u003cDate\u003e,\n        gamestate -\u003e Nullable\u003cInt4\u003e,\n    }\n}\n\ntable! {\n    games_nationstates (gameid, nationid) {\n        gameid -\u003e Int4,\n        nationid -\u003e Int4,\n        userid -\u003e Int4,\n    }\n}\n\ntable! {\n    nationstates (nationid) {\n        nationid -\u003e Int4,\n        regionid -\u003e Int4,\n        name -\u003e Varchar,\n        abbreviation -\u003e Nullable\u003cBpchar\u003e,\n    }\n}\n\ntable! {\n    regions (regionid) {\n        regionid -\u003e Int4,\n        name -\u003e Varchar,\n        abbreviation -\u003e Nullable\u003cBpchar\u003e,\n        bonus -\u003e Int4,\n    }\n}\n\ntable! {\n    users (userid) {\n        userid -\u003e Int4,\n        email -\u003e Varchar,\n        firstname -\u003e Varchar,\n        lastname -\u003e Varchar,\n        password -\u003e Varchar,\n        joindate -\u003e Nullable\u003cDate\u003e,\n        activated -\u003e Nullable\u003cBit\u003e,\n    }\n}\n\njoinable!(activation_keys -\u003e users (userid));\njoinable!(allegiances -\u003e games (gameid));\njoinable!(allegiances -\u003e users (userid));\njoinable!(games_nationstates -\u003e games (gameid));\njoinable!(games_nationstates -\u003e nationstates (nationid));\njoinable!(games_nationstates -\u003e users (userid));\njoinable!(nationstates -\u003e regions (regionid));\n\nallow_tables_to_appear_in_same_query!(\n    activation_keys,\n    allegiances,\n    borders,\n    games,\n    games_nationstates,\n    nationstates,\n    regions,\n    users,\n);\n","traces":[{"line":75,"address":4897961,"length":1,"stats":{"Line":0}},{"line":76,"address":4482905,"length":1,"stats":{"Line":0}},{"line":77,"address":4796937,"length":1,"stats":{"Line":0}},{"line":78,"address":4482953,"length":1,"stats":{"Line":0}},{"line":79,"address":4842041,"length":1,"stats":{"Line":0}},{"line":80,"address":4978985,"length":1,"stats":{"Line":0}},{"line":81,"address":4842089,"length":1,"stats":{"Line":0}}],"covered":0,"coverable":7}]};</script>
+    <script crossorigin src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
+    <script>const e = React.createElement;
+
+function pathToString(path) {
+  if (path[0] === '/') {
+    return '/' + path.slice(1).join('/');
+  } else {
+    return path.join('/');
+  }
+}
+
+function findCommonPath(files) {
+  if (!files || !files.length) {
+    return [];
+  }
+
+  function isPrefix(arr, prefix) {
+    if (arr.length < prefix.length) {
+      return false;
+    }
+    for (let i = prefix.length - 1; i >= 0; --i) {
+      if (arr[i] !== prefix[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  let commonPath = files[0].path.slice(0, -1);
+  while (commonPath.length) {
+    if (files.every(file => isPrefix(file.path, commonPath))) {
+      break;
+    }
+    commonPath.pop();
+  }
+  return commonPath;
+}
+
+function findFolders(files) {
+  if (!files || !files.length) {
+    return [];
+  }
+
+  let folders = files.filter(file => file.path.length > 1).map(file => file.path[0]);
+  folders = [...new Set(folders)]; // unique
+  folders.sort();
+
+  folders = folders.map(folder => {
+    let filesInFolder = files
+      .filter(file => file.path[0] === folder)
+      .map(file => ({
+        ...file,
+        path: file.path.slice(1),
+        parent: [...file.parent, file.path[0]],
+      }));
+
+    const children = findFolders(filesInFolder); // recursion
+
+    return {
+      is_folder: true,
+      path: [folder],
+      parent: files[0].parent,
+      children,
+      covered: children.reduce((sum, file) => sum + file.covered, 0),
+      coverable: children.reduce((sum, file) => sum + file.coverable, 0),
+    };
+  });
+
+  return [
+    ...folders,
+    ...files.filter(file => file.path.length === 1),
+  ];
+}
+
+class App extends React.Component {
+  constructor(...args) {
+    super(...args);
+
+    this.state = {
+      current: [],
+    };
+  }
+
+  componentDidMount() {
+    this.updateStateFromLocation();
+    window.addEventListener("hashchange", () => this.updateStateFromLocation(), false);
+  }
+
+  updateStateFromLocation() {
+    if (window.location.hash.length > 1) {
+      const current = window.location.hash.substr(1).split('/');
+      this.setState({current});
+    } else {
+      this.setState({current: []});
+    }
+  }
+
+  getCurrentPath() {
+    let file = this.props.root;
+    let path = [file];
+    for (let p of this.state.current) {
+      file = file.children.find(file => file.path[0] === p);
+      if (!file) {
+        return path;
+      }
+      path.push(file);
+    }
+    return path;
+  }
+
+  render() {
+    const path = this.getCurrentPath();
+    const file = path[path.length - 1];
+
+    let w = null;
+    if (file.is_folder) {
+      w = e(FilesList, {
+        folder: file,
+        onSelectFile: this.selectFile.bind(this),
+        onBack: path.length > 1 ? this.back.bind(this) : null,
+      });
+    } else {
+      w = e(DisplayFile, {
+        file,
+        onBack: this.back.bind(this),
+      });
+    }
+
+    return e('div', {className: 'app'}, w);
+  }
+
+  selectFile(file) {
+    this.setState(({current}) => {
+      return {current: [...current, file.path[0]]};
+    }, () => this.updateHash());
+  }
+
+  back(file) {
+    this.setState(({current}) => {
+      return {current: current.slice(0, current.length - 1)};
+    }, () => this.updateHash());
+  }
+
+  updateHash() {
+    if (!this.state.current || !this.state.current.length) {
+      window.location = '#';
+    } else {
+      window.location = '#' + this.state.current.join('/');
+    }
+  }
+}
+
+function FilesList({folder, onSelectFile, onBack}) {
+  let files = folder.children;
+  return e('div', {className: 'display-folder'},
+    e(FileHeader, {file: folder, onBack}),
+    e('table', {className: 'files-list'},
+      e('thead', {className: 'files-list__head'},
+        e('tr', null,
+          e('th', null, "Path"),
+          e('th', null, "Coverage")
+        )
+      ),
+      e('tbody', {className: 'files-list__body'},
+        files.map(file => e(File, {file, onClick: onSelectFile}))
+      )
+    )
+  );
+}
+
+function File({file, onClick}) {
+  const coverage = file.coverable ? file.covered / file.coverable * 100 : -1;
+
+  return e('tr', {
+      className: 'files-list__file'
+        + (coverage >= 0 && coverage < 50 ? ' files-list__file_low': '')
+        + (coverage >= 50 && coverage < 80 ? ' files-list__file_medium': '')
+        + (coverage >= 80 ? ' files-list__file_high': '')
+        + (file.is_folder ? ' files-list__file_folder': ''),
+      onClick: () => onClick(file),
+    },
+    e('td', null, pathToString(file.path)),
+    e('td', null,
+      file.covered + ' / ' + file.coverable +
+      (coverage >= 0 ? ' (' + coverage.toFixed(2) + '%)' : '')
+    )
+  );
+}
+
+function DisplayFile({file, onBack}) {
+  return e('div', {className: 'display-file'},
+    e(FileHeader, {file, onBack}),
+    e(FileContent, {file})
+  );
+}
+
+function FileHeader({file, onBack}) {
+  return e('div', {className: 'file-header'},
+    onBack ? e('a', {className: 'file-header__back', onClick: onBack}, 'Back') : null,
+    e('div', {className: 'file-header__name'}, pathToString([...file.parent, ...file.path])),
+    e('div', {className: 'file-header__stat'},
+      'Covered: ' + file.covered + ' of ' + file.coverable +
+      (file.coverable ? ' (' + (file.covered / file.coverable * 100).toFixed(2) + '%)' : '')
+    )
+  );
+}
+
+function FileContent({file}) {
+  return e('div', {className: 'file-content'},
+    file.content.split(/\r?\n/).map((line, index) => {
+      const trace = file.traces.find(trace => trace.line === index + 1);
+      const covered = trace && trace.stats.Line;
+      const uncovered = trace && !trace.stats.Line;
+      return e('pre', {
+          className: 'code-line'
+            + (covered ? ' code-line_covered' : '')
+            + (uncovered ? ' code-line_uncovered' : ''),
+          title: trace ? JSON.stringify(trace.stats, null, 2) : null,
+        }, line);
+    })
+  );
+}
+
+(function(){
+  const commonPath = findCommonPath(data.files);
+  const files = data.files.map(file => ({...file, path: file.path.slice(commonPath.length), parent: commonPath}));
+  const children = findFolders(files);
+
+  const root = {
+    is_folder: true,
+    children,
+    path: commonPath,
+    parent: [],
+    covered: children.reduce((sum, file) => sum + file.covered, 0),
+    coverable: children.reduce((sum, file) => sum + file.coverable, 0),
+  };
+
+  ReactDOM.render(e(App, {root}), document.getElementById('root'));
+}());
+</script>
+</body>
+</html>

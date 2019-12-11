@@ -1,6 +1,8 @@
 .git
 .vscode
 build
+coverage
+example_reports
 .env*
 dist
 node_modules

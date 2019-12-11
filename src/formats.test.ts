@@ -1,4 +1,7 @@
-import { defaultColorMatches } from "./formats";
+import Formats, { defaultColorMatches } from "./formats";
+import fs from "fs";
+import path from "path";
+import { JSDOM } from "jsdom";
 
 describe("Color matcher", () => {
   it.each`
@@ -53,5 +56,97 @@ describe("Color matcher", () => {
 
     // Assert
     expect(result).toEqual(expected);
+  });
+});
+
+describe("Formats object", () => {
+  it("should list the available formats", () => {
+    // Arrange
+
+    // Act
+    const result = Formats.listFormats();
+
+    // Assert
+    expect(result).toEqual(["tarpaulin"]);
+  });
+
+  it("should return the requested format", () => {
+    // Arrange
+
+    // Act
+    const result = Formats.getFormat("tarpaulin");
+
+    // Assert
+    expect(result).toBeDefined();
+    expect(result.matchColor).toBeInstanceOf(Function);
+    expect(result.parseCoverage).toBeInstanceOf(Function);
+  });
+});
+
+describe("Tarpaulin format", () => {
+  const reportPath = (file: string): string =>
+    path.join(__dirname, "..", "example_reports", file);
+
+  it("should use the default color matcher", () => {
+    // Arrange
+    const format = Formats.getFormat("tarpaulin");
+
+    // Act
+    const matcher = format.matchColor;
+
+    // Assert
+    expect(matcher).toEqual(defaultColorMatches);
+  });
+
+  it("should parse coverage from a normal tarpaulin file", () => {
+    // Arrange
+    const file = fs.readFileSync(reportPath("tarpaulin-report.html"), "utf-8");
+    const document = new JSDOM(file).window.document;
+
+    const format = Formats.getFormat("tarpaulin");
+
+    // Act
+    const result = format.parseCoverage(document);
+
+    // Assert
+    expect(typeof result).toEqual("number");
+    if (typeof result === "number") {
+      // 96.17% is the result given in the document itself
+      expect(result.toFixed(2)).toEqual("96.17");
+    }
+  });
+
+  it("should parse coverage from an empty tarpaulin file", () => {
+    // Arrange
+    const file = fs.readFileSync(reportPath("tarpaulin-empty.html"), "utf-8");
+    const document = new JSDOM(file).window.document;
+
+    const format = Formats.getFormat("tarpaulin");
+
+    // Act
+    const result = format.parseCoverage(document);
+
+    // Assert
+    expect(typeof result).toEqual("number");
+    if (typeof result === "number") {
+      expect(result.toFixed(2)).toEqual("0.00");
+    }
+  });
+
+  it("should return error when parsing coverage from invalid file", () => {
+    // Arrange
+    const file = fs.readFileSync(reportPath("tarpaulin-invalid.html"), "utf-8");
+    const document = new JSDOM(file).window.document;
+
+    const format = Formats.getFormat("tarpaulin");
+
+    // Act
+    const result = format.parseCoverage(document);
+
+    // Assert
+    expect(typeof result).not.toEqual("number");
+    if (typeof result !== "number") {
+      expect(result.message).toEqual("Invalid report document");
+    }
   });
 });
