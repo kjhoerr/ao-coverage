@@ -6,6 +6,13 @@ const { Console } = winston.transports;
 
 const LOG_LEVEL = process.env.LOG_LEVEL || "info";
 
+const consoleFormat = combine(
+  colorize(),
+  printf(({ level, message, label, timestamp }) => {
+    return `${timestamp} [${label}] ${level}: ${message}`;
+  })
+);
+
 /**
  * Provides standard logging format and output for the server.
  */
@@ -16,14 +23,6 @@ export default (
   format: Format;
   transports: Transport[];
 } => ({
-  format: combine(
-    splat(),
-    timestamp(),
-    label({ label: clazz }),
-    colorize(),
-    printf(({ level, message, label, timestamp }) => {
-      return `${timestamp} [${label}] ${level}: ${message}`;
-    })
-  ),
-  transports: [new Console({ level: level })]
+  format: combine(splat(), timestamp(), label({ label: clazz })),
+  transports: [new Console({ level: level, format: consoleFormat })]
 });

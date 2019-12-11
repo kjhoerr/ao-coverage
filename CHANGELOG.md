@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Jest for handling tests
+- Unit tests for color matcher in formats.ts, loggerConfig in logger.ts
+
+### Changed
+
+- Fixed issue with colorMatcher returning bad values for everything > stage2
+- `colorize()` and `printf()` formats apply specifically to console transport
+
 ## [0.3.0]
 
 ### Added

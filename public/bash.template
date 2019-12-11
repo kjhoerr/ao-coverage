@@ -12,7 +12,7 @@ format="tarpaulin"
 report=""
 token="$COV_TOKEN"
 
-if [[ "$CI" -eq "drone" ]]; then
+if [[ "$CI" == "drone" ]]; then
   commit="$DRONE_COMMIT"
   branch="$DRONE_BRANCH"
   repo="$DRONE_REPO"
@@ -22,7 +22,7 @@ else
   repo="$VCS_REPO"
 fi
 
-if [[ "$format" -eq "tarpaulin" ]]; then
+if [[ "$format" == "tarpaulin" ]]; then
   report="${REPORT_FILE:-tarpaulin-report.html}"
 fi
 

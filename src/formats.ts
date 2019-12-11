@@ -24,7 +24,7 @@ export interface GradientStyle {
 }
 
 // color is a gradient from green (>=stage_1) -> yellow (stage_2) -> red. Stage values should come from metadata.
-const defaultColorMatches = (
+export const defaultColorMatches = (
   coverage: number,
   style: GradientStyle
 ): string => {
@@ -32,9 +32,12 @@ const defaultColorMatches = (
     coverage >= style.stage1
       ? 15
       : coverage >= style.stage2
-      ? (Math.floor(coverage) - style.stage2) * 16 + 15
+      ? Math.floor(
+          ((style.stage1 - coverage) / (style.stage1 - style.stage2)) * 240
+        ) + 15
       : 240 + Math.floor(coverage / (style.stage2 / 15));
-  return gradient.toString(16) + "0";
+  const result = gradient.toString(16);
+  return (result.length === 1 ? "0" : "") + result + "0";
 };
 
 const FormatsObj: FormatObj = {
