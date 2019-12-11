@@ -1,6 +1,7 @@
 export class BranchNotFoundError extends Error {
   constructor() {
     super();
+    this.name = "BranchNotFoundError";
     this.message = "Branch not found";
   }
 }
@@ -8,6 +9,7 @@ export class BranchNotFoundError extends Error {
 export class InvalidReportDocumentError extends Error {
   constructor() {
     super();
+    this.name = "InvalidReportDocumentError";
     this.message = "Invalid report document";
   }
 }
