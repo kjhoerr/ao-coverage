@@ -1,6 +1,6 @@
 {
   "name": "ao-coverage",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Simple code coverage storage and server",
   "repository": {
     "type": "git",
@@ -30,7 +30,7 @@
     "express-winston": "^4.0.1",
     "handlebars": "^4.5.3",
     "jsdom": "^15.2.1",
-    "mongodb": "^3.3.5",
+    "mongodb": "^3.4.0",
     "typescript": "^3.7.3",
     "winston": "^3.2.1"
   },

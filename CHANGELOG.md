@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1]
+
 ### Added
 
 - Jest for handling tests
@@ -67,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Code formatting using Prettier
 
 [unreleased]: https://git.submelon.dev/kjhoerr/ao-coverage/src/branch/trunk
+[0.3.1]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.3.1
 [0.3.0]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.3.0
 [0.2.1]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.2.1
 [0.2.0]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.2.0
