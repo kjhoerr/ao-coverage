@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Exit application if bash template could not be created, and does not already exist
+- Generalize template processing, for unit tests and for future flexibility
+
 ## [0.3.1]
 
 ### Added
