@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Exit application if bash template could not be created, and does not already exist
 - Generalize template processing, for unit tests and for future flexibility
+- Fixed rounding for default color matcher when inbetween step values
+- Use new nullish coalescing operator for environment variable assignments
 
 ## [0.3.1]
 

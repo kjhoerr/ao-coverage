@@ -53,7 +53,8 @@
     "testEnvironment": "node",
     "collectCoverageFrom": [
       "src/**/*.ts",
-      "!src/**/*.test.ts"
+      "!src/**/*.test.ts",
+      "!src/index.ts"
     ],
     "roots": [
       "src/"

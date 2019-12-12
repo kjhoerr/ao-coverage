@@ -11,8 +11,8 @@ import { configOrError } from "./util/config";
 import loggerConfig from "./util/logger";
 import { Messages } from "./errors";
 
-const TOKEN = process.env.TOKEN || "";
-const UPLOAD_LIMIT = Number(process.env.UPLOAD_LIMIT || 4194304);
+const TOKEN = process.env.TOKEN ?? "";
+const UPLOAD_LIMIT = Number(process.env.UPLOAD_LIMIT ?? 4194304);
 const HOST_DIR = configOrError("HOST_DIR");
 
 const logger = winston.createLogger(loggerConfig("HTTP"));

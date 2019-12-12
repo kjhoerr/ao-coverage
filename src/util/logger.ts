@@ -4,7 +4,7 @@ import * as Transport from "winston-transport";
 const { combine, splat, timestamp, label, colorize, printf } = winston.format;
 const { Console } = winston.transports;
 
-const LOG_LEVEL = process.env.LOG_LEVEL || "info";
+const LOG_LEVEL = process.env.LOG_LEVEL ?? "info";
 
 const consoleFormat = combine(
   colorize(),

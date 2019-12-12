@@ -16,14 +16,14 @@ import loggerConfig from "./util/logger";
 import { configOrError, handleShutdown } from "./util/config";
 
 // Start-up configuration
-const BIND_ADDRESS = process.env.BIND_ADDRESS || "localhost";
-const PORT = Number(process.env.PORT || 3000);
-const TARGET_URL = process.env.TARGET_URL || "http://localhost:3000";
+const BIND_ADDRESS = process.env.BIND_ADDRESS ?? "localhost";
+const PORT = Number(process.env.PORT ?? 3000);
+const TARGET_URL = process.env.TARGET_URL ?? "http://localhost:3000";
 
 const logger = winston.createLogger(loggerConfig("ROOT"));
 
 const MONGO_URI = configOrError("MONGO_URI");
-const MONGO_DB = process.env.MONGO_DB || "ao-coverage";
+const MONGO_DB = process.env.MONGO_DB ?? "ao-coverage";
 const HOST_DIR = configOrError("HOST_DIR");
 
 fs.accessSync(HOST_DIR, fs.constants.R_OK | fs.constants.W_OK);

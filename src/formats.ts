@@ -47,7 +47,7 @@ const FormatsObj: FormatObj = {
     tarpaulin: {
       parseCoverage: (file: Document): CoverageResult => {
         const scripts = file.getElementsByTagName("script");
-        if (scripts.length == 0) {
+        if (scripts.length === 0) {
           return new InvalidReportDocumentError();
         }
         const data = scripts[0].text;
