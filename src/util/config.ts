@@ -7,21 +7,21 @@ import loggerConfig from "./logger";
 const logger = winston.createLogger(loggerConfig("ROOT"));
 
 export const configOrError = (varName: string): string => {
-  if (!process.env[varName]) {
+  const value = process.env[varName];
+  if (value !== undefined) {
+    return value;
+  } else {
     logger.error("%s must be defined", varName);
     process.exit(1);
-    return "";
-  } else {
-    return process.env[varName] || "";
   }
 };
 
 export const handleShutdown = (mongo: MongoClient, server: Server) => (
   signal: NodeJS.Signals
-): void => {
+): Promise<void> => {
   logger.warn("%s signal received. Closing shop.", signal);
 
-  mongo
+  return mongo
     .close()
     .then(() => {
       logger.info("MongoDB client connection closed.");
