@@ -33,8 +33,10 @@ export const defaultColorMatches = (
       ? 15
       : coverage >= style.stage2
       ? Math.floor(
-          ((style.stage1 - coverage) / (style.stage1 - style.stage2)) * 240
-        ) + 15
+          ((style.stage1 - coverage) / (style.stage1 - style.stage2)) * 15
+        ) *
+          16 +
+        15
       : 240 + Math.floor(coverage / (style.stage2 / 15));
   const result = gradient.toString(16);
   return (result.length === 1 ? "0" : "") + result + "0";
