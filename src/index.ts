@@ -9,6 +9,7 @@ import expressWinston from "express-winston";
 
 dotenv.config();
 
+import processTemplate, { Template } from "./templates";
 import routes from "./routes";
 import Metadata from "./metadata";
 import loggerConfig from "./util/logger";
@@ -17,6 +18,7 @@ import { configOrError, handleShutdown } from "./util/config";
 // Start-up configuration
 const BIND_ADDRESS = process.env.BIND_ADDRESS || "localhost";
 const PORT = Number(process.env.PORT || 3000);
+const TARGET_URL = process.env.TARGET_URL || "http://localhost:3000";
 
 const logger = winston.createLogger(loggerConfig("ROOT"));
 
@@ -31,7 +33,26 @@ if (!path.isAbsolute(HOST_DIR)) {
 }
 
 // prepare template files
-require("./templates");
+const bashTemplate = {
+  inputFile: path.join(__dirname, "..", "public", "bash.template"),
+  outputFile: path.join(HOST_DIR, "bash"),
+  context: { TARGET_URL }
+} as Template;
+processTemplate(bashTemplate)
+  .then(template => {
+    logger.debug("Generated '%s' from template file", template.outputFile);
+  })
+  .catch(err => {
+    logger.error("Unable to process template file: %s", err);
+
+    // if the output file exists, then we are fine with continuing without
+    return fs.promises.access(bashTemplate.outputFile, fs.constants.R_OK);
+  })
+  .catch(err => {
+    logger.error("Cannot proceed: %s", err);
+
+    process.exit(1);
+  });
 
 new MongoClient(MONGO_URI, { useUnifiedTopology: true }).connect(
   (err, mongo) => {
