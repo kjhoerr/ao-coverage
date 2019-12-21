@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Catch promise rejections for POST endpoint
+- Default error descriptions for logged errors
+
 ## [0.3.2]
 
 ### Changed

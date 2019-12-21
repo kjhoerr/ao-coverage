@@ -101,7 +101,10 @@ export default (metadata: Metadata): Router => {
           result
             ? res.status(200).send()
             : res.status(500).send(Messages.UnknownError)
-        );
+        ).catch(err => {
+          logger.error(err ?? "Unknown error occurred while processing POST request");
+          return res.status(500).send(Messages.UnknownError)
+        });
     });
   });
 
@@ -138,7 +141,7 @@ export default (metadata: Metadata): Router => {
         }
       },
       err => {
-        logger.error(err);
+        logger.error(err ?? "Error occurred while fetching commit for GET request");
         res.status(500).send(Messages.UnknownError);
       }
     );
@@ -162,7 +165,7 @@ export default (metadata: Metadata): Router => {
         }
       },
       err => {
-        logger.error(err);
+        logger.error(err ?? "Error occurred while fetching commit for GET request");
         res.status(500).send(Messages.UnknownError);
       }
     );

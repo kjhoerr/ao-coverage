@@ -57,7 +57,7 @@ processTemplate(bashTemplate)
 new MongoClient(MONGO_URI, { useUnifiedTopology: true }).connect(
   (err, mongo) => {
     if (err !== null) {
-      logger.error(err);
+      logger.error(err ?? "Unable to connect to database");
       process.exit(1);
     }
 
