@@ -30,16 +30,16 @@ export const defaultColorMatches = (
 ): string => {
   const gradient =
     coverage >= style.stage1
-      ? 15
+      ? 76
       : coverage >= style.stage2
-      ? Math.floor(
-          ((style.stage1 - coverage) / (style.stage1 - style.stage2)) * 15
+        ? Math.floor(
+          ((style.stage1 - coverage) / (style.stage1 - style.stage2)) * 10
         ) *
-          16 +
-        15
-      : 240 + Math.floor(coverage / (style.stage2 / 15));
+        16 +
+        76
+        : 225 + Math.floor(coverage / (style.stage2 / 11));
   const result = gradient.toString(16);
-  return (result.length === 1 ? "0" : "") + result + "0";
+  return (result.length === 1 ? "0" : "") + result + "1";
 };
 
 const FormatsObj: FormatObj = {
@@ -75,11 +75,11 @@ const FormatsObj: FormatObj = {
     }
   },
 
-  listFormats: function() {
+  listFormats: function () {
     return Object.keys(this.formats);
   },
 
-  getFormat: function(format: string) {
+  getFormat: function (format: string) {
     return this.formats[format];
   }
 };
