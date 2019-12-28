@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- More descriptive output from bash template, with links to the files
+
 ## [0.3.3]
 
 ### Changed
