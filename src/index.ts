@@ -38,7 +38,17 @@ const bashTemplate = {
   outputFile: path.join(HOST_DIR, "bash"),
   context: { TARGET_URL }
 } as Template;
+const indexTemplate = {
+  inputFile: path.join(__dirname, "..", "public", "index.html.template"),
+  outputFile: path.join(HOST_DIR, "index.html"),
+  context: { TARGET_URL }
+} as Template;
+
 processTemplate(bashTemplate)
+  .then(template => {
+    logger.debug("Generated '%s' from template file", template.outputFile);
+  })
+  .then(() => processTemplate(indexTemplate))
   .then(template => {
     logger.debug("Generated '%s' from template file", template.outputFile);
   })
@@ -48,6 +58,7 @@ processTemplate(bashTemplate)
     // if the output file exists, then we are fine with continuing without
     return fs.promises.access(bashTemplate.outputFile, fs.constants.R_OK);
   })
+  .then(() => fs.promises.access(indexTemplate.outputFile, fs.constants.R_OK))
   .catch(err => {
     logger.error("Cannot proceed: %s", err);
 

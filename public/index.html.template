@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <title>AO Coverage: Simple code coverage tracking</title>
+</head>
+
+<body>
+  <div id="content">
+    <span class="code">bash &lt;(curl -s {{TARGET_URL}}/bash)</span>
+  </div>
+</body>
+
+</html>

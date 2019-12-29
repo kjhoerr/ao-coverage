@@ -20,6 +20,11 @@ const logger = winston.createLogger(loggerConfig("HTTP"));
 export default (metadata: Metadata): Router => {
   const router = Router();
 
+  // serve landing page
+  router.get("/", (_, res) => {
+    res.sendFile(path.join(HOST_DIR, "index.html"))
+  });
+
   // serve script for posting coverage report
   router.use(
     "/bash",
