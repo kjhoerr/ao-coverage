@@ -34,12 +34,12 @@ if (!path.isAbsolute(HOST_DIR)) {
 
 // prepare template files
 const bashTemplate = {
-  inputFile: path.join(__dirname, "..", "public", "bash.template"),
+  inputFile: path.join(__dirname, "..", "public", "templates", "bash.template"),
   outputFile: path.join(HOST_DIR, "bash"),
   context: { TARGET_URL }
 } as Template;
 const indexTemplate = {
-  inputFile: path.join(__dirname, "..", "public", "index.html.template"),
+  inputFile: path.join(__dirname, "..", "public", "templates", "index.html.template"),
   outputFile: path.join(HOST_DIR, "index.html"),
   context: { TARGET_URL }
 } as Template;
