@@ -11,17 +11,24 @@ repo=""
 format="tarpaulin"
 report=""
 token="$COV_TOKEN"
+curl_verbosity=""
 
 function verbose_say() {
-  if [ -z "$QUIET" ] || [ "$VERBOSE" == "true" ]; then
+  if [ -z "$SILENT" ] && [ "$VERBOSE" == "true" ]; then
     echo "$1"
   fi
 }
 
-verbose_say "==========================="
-verbose_say "        ao-coverage        "
-verbose_say "==========================="
-verbose_say
+function say() {
+  if [ -z "$SILENT" ]; then
+    echo "$1"
+  fi
+}
+
+say "==========================="
+say "        ao-coverage        "
+say "==========================="
+say
 
 verbose_say "Gathering report information . . ."
 
@@ -47,26 +54,31 @@ if [ "$format" == "tarpaulin" ]; then
 fi
 
 if [[ ! -f "$report" ]]; then
-  echo "Report file could not be found."
+  say "Report file could not be found."
   exit 1
 fi
 
-verbose_say "Uploading $report . . ."
+if [ "$VERBOSE" != "true" ]; then
+  curl_verbosity="-s"
+fi
+
+say "Uploading $report . . ."
 
 response=$(curl -X POST --data-binary "@$report" \
   -H 'Content-Type: text/html' \
+  $curl_verbosity \
   "$url/v1/$repo/$branch/$commit.html?token=$token&format=$format")
 
 if [ ! -z "$response" ]; then
-  echo "Error uploading report: $response"
+  say "Error uploading report: $response"
   exit 1
 else
-  echo "Successfully uploaded report!"
-  verbose_say
-  verbose_say "View uploaded report at: $url/v1/$repo/$branch/$commit.html"
-  verbose_say "View coverage badge at: $url/v1/$repo/$branch/$commit.svg"
-  verbose_say
-  verbose_say "Shorthand links are also available, as the latest commit of this branch."
-  verbose_say "View latest report for branch $branch: $url/v1/$repo/$branch.html"
-  verbose_say "View latest badge for branch $branch: $url/v1/$repo/$branch.svg"
+  say "Successfully uploaded report!"
+  say
+  say "View uploaded report at: $url/v1/$repo/$branch/$commit.html"
+  say "View coverage badge at: $url/v1/$repo/$branch/$commit.svg"
+  say
+  say "Shorthand links are also available, as the latest commit of this branch."
+  say "View latest report for branch $branch: $url/v1/$repo/$branch.html"
+  say "View latest badge for branch $branch: $url/v1/$repo/$branch.svg"
 fi
