@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- landing page provided at / based on template
+
 ### Changed
 
 - More descriptive output from bash template, with links to the files
+- Moved template processing to router, so unit tests can be run without build
 
 ## [0.3.3]
 

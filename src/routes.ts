@@ -5,6 +5,7 @@ import winston from "winston";
 import path from "path";
 import fs from "fs";
 
+import processTemplate, { Template } from "./templates";
 import formats, { GradientStyle } from "./formats";
 import Metadata, { HeadIdentity } from "./metadata";
 import { configOrError } from "./util/config";
@@ -14,11 +15,44 @@ import { Messages } from "./errors";
 const TOKEN = process.env.TOKEN ?? "";
 const UPLOAD_LIMIT = Number(process.env.UPLOAD_LIMIT ?? 4194304);
 const HOST_DIR = configOrError("HOST_DIR");
+const TARGET_URL = process.env.TARGET_URL ?? "http://localhost:3000";
 
 const logger = winston.createLogger(loggerConfig("HTTP"));
 
 export default (metadata: Metadata): Router => {
   const router = Router();
+
+  const bashTemplate = {
+    inputFile: path.join(__dirname, "..", "public", "templates", "bash.template"),
+    outputFile: path.join(HOST_DIR, "bash"),
+    context: { TARGET_URL }
+  } as Template;
+  const indexTemplate = {
+    inputFile: path.join(__dirname, "..", "public", "templates", "index.html.template"),
+    outputFile: path.join(HOST_DIR, "index.html"),
+    context: { TARGET_URL }
+  } as Template;
+
+  processTemplate(bashTemplate)
+    .then(template => {
+      logger.debug("Generated '%s' from template file", template.outputFile);
+    })
+    .then(() => processTemplate(indexTemplate))
+    .then(template => {
+      logger.debug("Generated '%s' from template file", template.outputFile);
+    })
+    .catch(err => {
+      logger.error("Unable to process template file: %s", err);
+
+      // if the output file exists, then we are fine with continuing without
+      return fs.promises.access(bashTemplate.outputFile, fs.constants.R_OK);
+    })
+    .then(() => fs.promises.access(indexTemplate.outputFile, fs.constants.R_OK))
+    .catch(err => {
+      logger.error("Cannot proceed: %s", err);
+
+      process.exit(1);
+    });
 
   // serve landing page
   router.get("/", (_, res) => {
