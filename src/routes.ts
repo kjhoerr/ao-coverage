@@ -67,6 +67,15 @@ export default (metadata: Metadata): Router => {
     })
   );
 
+  // serve static files
+  // favicon should be served directly on root
+  router.get("/favicon.ico", (_, res) => {
+    res.sendFile(path.join(__dirname, "..", "public", "static", "favicon.ico"));
+  });
+  router.use(
+    "/static", express.static(path.join(__dirname, "..", "public", "static"))
+  );
+
   // Upload HTML file
   router.post("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
     const { org, repo, branch, commit } = req.params;

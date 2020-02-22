@@ -1,0 +1,59 @@
+body {
+  margin: 0;
+}
+
+div#top-half {
+  background-color: #c6e3a4;
+  padding: 8px;
+}
+div#bottom-half {
+  padding: 12px;
+}
+
+div#container {
+  margin: 0 auto;
+  width: 600px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+div#logo {
+  width: 256px;
+  height: 256px;
+  margin: 0 auto;
+	pointer-events: none;
+	user-select: none;
+}
+
+div#content {
+  padding-bottom: 8px;
+}
+
+div#container h1 {
+  text-align: center;
+  font-weight: 500;
+  margin: 12px 0 0;
+}
+
+div#content p {
+  text-align: justify;
+  padding: 0 10px;
+}
+
+.code-container {
+  text-align: center;
+  margin: 24px 0;
+}
+.code {
+  background-color: #e8ebf4;
+  color: #000;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: inherit;
+  padding: 6px 14px;
+  border: 0px solid #e8ebf4;
+  border-radius: 4px;
+  left: auto;
+  right: auto;
+}
+.code.shell:before {
+  content: "$ ";
+}
