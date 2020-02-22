@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0]
+
 ### Added
 
 - landing page provided at / based on template
+- serve favicon at server root
 
 ### Changed
 
@@ -95,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Code formatting using Prettier
 
 [unreleased]: https://git.submelon.dev/kjhoerr/ao-coverage/src/branch/trunk
+[0.4.0]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.4.0
 [0.3.3]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.3.3
 [0.3.2]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.3.2
 [0.3.1]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.3.1
