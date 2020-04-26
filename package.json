@@ -21,34 +21,34 @@
   "author": "Kevin J Hoerr <kjhoerr@submelon.tech>",
   "license": "Parity-7.0.0",
   "dependencies": {
-    "@types/express": "^4.17.2",
+    "@types/express": "^4.17.6",
     "@types/jsdom": "^12.2.4",
-    "@types/mongodb": "^3.3.16",
+    "@types/mongodb": "^3.5.14",
     "badgen": "^3.0.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-winston": "^4.0.3",
-    "handlebars": "^4.7.3",
+    "handlebars": "^4.7.6",
     "jsdom": "^15.2.1",
-    "mongodb": "^3.5.3",
-    "typescript": "^3.8.2",
+    "mongodb": "^3.5.6",
+    "typescript": "^3.8.3",
     "winston": "^3.2.1"
   },
   "devDependencies": {
-    "@types/jest": "^25.1.0",
+    "@types/jest": "^25.2.1",
     "@types/supertest": "^2.0.8",
     "@types/triple-beam": "^1.3.0",
-    "@typescript-eslint/eslint-plugin": "^2.20.0",
-    "@typescript-eslint/parser": "^2.20.0",
+    "@typescript-eslint/eslint-plugin": "^2.29.0",
+    "@typescript-eslint/parser": "^2.29.0",
     "eslint": "^6.8.0",
-    "eslint-config-prettier": "^6.10.0",
-    "eslint-plugin-prettier": "^3.1.2",
-    "jest": "^25.1.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.3",
+    "jest": "^25.4.0",
     "prettier": "^1.19.1",
     "supertest": "^4.0.2",
     "triple-beam": "^1.3.0",
-    "ts-jest": "^25.2.1",
-    "tsc-watch": "^4.1.0"
+    "ts-jest": "^25.4.0",
+    "tsc-watch": "^4.2.3"
   },
   "jest": {
     "preset": "ts-jest",
@@ -57,7 +57,8 @@
       "src/**/*.ts",
       "!src/**/*.test.ts",
       "!src/**/__tests__/**/*.ts",
-      "!src/index.ts"
+      "!src/index.ts",
+      "!src/init.ts"
     ],
     "roots": [
       "src/"

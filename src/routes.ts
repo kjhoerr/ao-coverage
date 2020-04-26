@@ -86,7 +86,7 @@ export default (metadata: Metadata): Router => {
       return res.status(401).send(Messages.InvalidToken);
     }
 
-    if (!formats.listFormats().includes(format)) {
+    if (typeof format !== 'string' || !formats.listFormats().includes(format)) {
       return res.status(406).send(Messages.InvalidFormat);
     }
 
