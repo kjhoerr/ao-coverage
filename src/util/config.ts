@@ -37,7 +37,7 @@ export const persistTemplate = async (input: Template): Promise<void> => {
       process.exit(1);
     }
     // if the output file exists, then we are fine with continuing without
-    logger.warning(
+    logger.warn(
       "Could not generate '%s' from template file, but file already exists: %s",
       input.outputFile,
       err1
@@ -50,43 +50,50 @@ const TARGET_URL = process.env.TARGET_URL ?? "http://localhost:3000";
 const HOST_DIR = configOrError("HOST_DIR");
 
 export const handleStartup = async (): Promise<MongoClient> => {
-  await fs.promises.access(HOST_DIR, fs.constants.R_OK | fs.constants.W_OK);
-  if (!path.isAbsolute(HOST_DIR)) {
-    logger.error("HOST_DIR must be an absolute path");
+  try {
+    await fs.promises.access(HOST_DIR, fs.constants.R_OK | fs.constants.W_OK);
+    if (!path.isAbsolute(HOST_DIR)) {
+      logger.error("HOST_DIR must be an absolute path");
+      process.exit(1);
+    }
+
+    const mongo = await new MongoClient(MONGO_URI, { useUnifiedTopology: true })
+      .connect()
+      .catch((err: MongoError) => {
+        logger.error(err.message ?? "Unable to connect to database");
+        process.exit(1);
+      });
+
+    await persistTemplate({
+      inputFile: path.join(
+        __dirname,
+        "..",
+        "..",
+        "public",
+        "templates",
+        "bash.template"
+      ),
+      outputFile: path.join(HOST_DIR, "bash"),
+      context: { TARGET_URL }
+    } as Template);
+    await persistTemplate({
+      inputFile: path.join(
+        __dirname,
+        "..",
+        "..",
+        "public",
+        "templates",
+        "index.html.template"
+      ),
+      outputFile: path.join(HOST_DIR, "index.html"),
+      context: { TARGET_URL }
+    } as Template);
+
+    return mongo;
+  } catch (err) {
+    logger.error("Error occurred during startup: %s", err);
     process.exit(1);
   }
-
-  const mongo = await new MongoClient(MONGO_URI, { useUnifiedTopology: true })
-    .connect()
-    .catch((err: MongoError) => {
-      logger.error(err.message ?? "Unable to connect to database");
-      process.exit(1);
-    });
-
-  await persistTemplate({
-    inputFile: path.join(
-      __dirname,
-      "..",
-      "public",
-      "templates",
-      "bash.template"
-    ),
-    outputFile: path.join(HOST_DIR, "bash"),
-    context: { TARGET_URL }
-  } as Template);
-  await persistTemplate({
-    inputFile: path.join(
-      __dirname,
-      "..",
-      "public",
-      "templates",
-      "index.html.template"
-    ),
-    outputFile: path.join(HOST_DIR, "index.html"),
-    context: { TARGET_URL }
-  } as Template);
-
-  return mongo;
 };
 
 export const handleShutdown = (mongo: MongoClient, server: Server) => (
