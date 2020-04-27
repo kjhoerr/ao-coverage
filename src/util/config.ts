@@ -45,48 +45,33 @@ export const persistTemplate = async (input: Template): Promise<void> => {
   }
 };
 
-const MONGO_URI = configOrError("MONGO_URI");
-const TARGET_URL = process.env.TARGET_URL ?? "http://localhost:3000";
-const HOST_DIR = configOrError("HOST_DIR");
-
-export const handleStartup = async (): Promise<MongoClient> => {
+export const handleStartup = async (
+  mongoUri: string,
+  hostDir: string,
+  publicPath: string,
+  targetUrl: string
+): Promise<MongoClient> => {
   try {
-    await fs.promises.access(HOST_DIR, fs.constants.R_OK | fs.constants.W_OK);
-    if (!path.isAbsolute(HOST_DIR)) {
-      logger.error("HOST_DIR must be an absolute path");
-      process.exit(1);
+    await fs.promises.access(hostDir, fs.constants.R_OK | fs.constants.W_OK);
+    if (!path.isAbsolute(hostDir)) {
+      await Promise.reject("hostDir must be an absolute path");
     }
 
-    const mongo = await MongoClient.connect(MONGO_URI, {
+    const mongo = await MongoClient.connect(mongoUri, {
       useUnifiedTopology: true
-    }).catch((err: MongoError) => {
-      logger.error(err.message ?? "Unable to connect to database");
-      process.exit(1);
-    });
+    }).catch((err: MongoError) =>
+      Promise.reject(err.message ?? "Unable to connect to database")
+    );
 
     await persistTemplate({
-      inputFile: path.join(
-        __dirname,
-        "..",
-        "..",
-        "public",
-        "templates",
-        "bash.template"
-      ),
-      outputFile: path.join(HOST_DIR, "bash"),
-      context: { TARGET_URL }
+      inputFile: path.join(publicPath, "templates", "bash.template"),
+      outputFile: path.join(hostDir, "bash"),
+      context: { targetUrl }
     } as Template);
     await persistTemplate({
-      inputFile: path.join(
-        __dirname,
-        "..",
-        "..",
-        "public",
-        "templates",
-        "index.html.template"
-      ),
-      outputFile: path.join(HOST_DIR, "index.html"),
-      context: { TARGET_URL }
+      inputFile: path.join(publicPath, "templates", "index.html.template"),
+      outputFile: path.join(hostDir, "index.html"),
+      context: { targetUrl }
     } as Template);
 
     return mongo;

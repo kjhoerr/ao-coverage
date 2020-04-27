@@ -2,22 +2,27 @@ import dotenv from "dotenv";
 import express from "express";
 import winston from "winston";
 import expressWinston from "express-winston";
+import path from "path";
 
 dotenv.config();
 
 import routes from "./routes";
 import Metadata from "./metadata";
 import loggerConfig from "./util/logger";
-import { handleStartup, handleShutdown } from "./util/config";
+import { configOrError, handleStartup, handleShutdown } from "./util/config";
 
 // Start-up configuration
 const BIND_ADDRESS = process.env.BIND_ADDRESS ?? "localhost";
 const MONGO_DB = process.env.MONGO_DB ?? "ao-coverage";
 const PORT = Number(process.env.PORT ?? 3000);
+const MONGO_URI = configOrError("MONGO_URI");
+const TARGET_URL = process.env.TARGET_URL ?? "http://localhost:3000";
+const PUBLIC_PATH = path.join(__dirname, "..", "public");
+const HOST_DIR = configOrError("HOST_DIR");
 
 const logger = winston.createLogger(loggerConfig("ROOT"));
 
-handleStartup().then(mongo => {
+handleStartup(MONGO_URI, HOST_DIR, PUBLIC_PATH, TARGET_URL).then(mongo => {
   const app: express.Application = express();
   const metadata = new Metadata(mongo.db(MONGO_DB));
 
@@ -32,7 +37,7 @@ handleStartup().then(mongo => {
   );
 
   // actual app routes
-  app.use(routes(metadata));
+  app.use(routes(metadata, PUBLIC_PATH));
 
   app.use(expressWinston.errorLogger(loggerConfig("_ERR")));
 

@@ -38,7 +38,7 @@ const mock = (
 const request = (mockMeta: MetadataMockType = mock()): SuperTest<Test> => {
   const app = express();
 
-  app.use(routes(mockMeta as Metadata));
+  app.use(routes(mockMeta as Metadata, path.join(__dirname, "..", "public")));
   return _request(app);
 };
 

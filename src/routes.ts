@@ -17,7 +17,7 @@ const HOST_DIR = configOrError("HOST_DIR");
 
 const logger = winston.createLogger(loggerConfig("HTTP"));
 
-export default (metadata: Metadata): Router => {
+export default (metadata: Metadata, publicPath: string): Router => {
   const router = Router();
 
   // serve landing page
@@ -33,15 +33,12 @@ export default (metadata: Metadata): Router => {
     })
   );
 
-  // serve static files
   // favicon should be served directly on root
   router.get("/favicon.ico", (_, res) => {
-    res.sendFile(path.join(__dirname, "..", "public", "static", "favicon.ico"));
+    res.sendFile(path.join(publicPath, "static", "favicon.ico"));
   });
-  router.use(
-    "/static",
-    express.static(path.join(__dirname, "..", "public", "static"))
-  );
+  // serve static files
+  router.use("/static", express.static(path.join(publicPath, "static")));
 
   // Upload HTML file
   router.post("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
@@ -219,7 +216,7 @@ export default (metadata: Metadata): Router => {
 
   router.use((_, res) => {
     res.status(404);
-    res.sendFile(path.join(__dirname, "..", "public", "static", "404.html"));
+    res.sendFile(path.join(publicPath, "static", "404.html"));
   });
 
   return router;
