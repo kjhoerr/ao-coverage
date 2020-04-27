@@ -66,12 +66,12 @@ export const handleStartup = async (
     await persistTemplate({
       inputFile: path.join(publicPath, "templates", "bash.template"),
       outputFile: path.join(hostDir, "bash"),
-      context: { targetUrl }
+      context: { TARGET_URL: targetUrl }
     } as Template);
     await persistTemplate({
       inputFile: path.join(publicPath, "templates", "index.html.template"),
       outputFile: path.join(hostDir, "index.html"),
-      context: { targetUrl }
+      context: { TARGET_URL: targetUrl }
     } as Template);
 
     return mongo;
