@@ -5,7 +5,6 @@ import winston from "winston";
 import path from "path";
 import fs from "fs";
 
-import processTemplate, { Template } from "./templates";
 import formats, { GradientStyle } from "./formats";
 import Metadata, { HeadIdentity } from "./metadata";
 import { configOrError } from "./util/config";
@@ -15,48 +14,15 @@ import { Messages } from "./errors";
 const TOKEN = process.env.TOKEN ?? "";
 const UPLOAD_LIMIT = Number(process.env.UPLOAD_LIMIT ?? 4194304);
 const HOST_DIR = configOrError("HOST_DIR");
-const TARGET_URL = process.env.TARGET_URL ?? "http://localhost:3000";
 
 const logger = winston.createLogger(loggerConfig("HTTP"));
 
 export default (metadata: Metadata): Router => {
   const router = Router();
 
-  const bashTemplate = {
-    inputFile: path.join(__dirname, "..", "public", "templates", "bash.template"),
-    outputFile: path.join(HOST_DIR, "bash"),
-    context: { TARGET_URL }
-  } as Template;
-  const indexTemplate = {
-    inputFile: path.join(__dirname, "..", "public", "templates", "index.html.template"),
-    outputFile: path.join(HOST_DIR, "index.html"),
-    context: { TARGET_URL }
-  } as Template;
-
-  processTemplate(bashTemplate)
-    .then(template => {
-      logger.debug("Generated '%s' from template file", template.outputFile);
-    })
-    .then(() => processTemplate(indexTemplate))
-    .then(template => {
-      logger.debug("Generated '%s' from template file", template.outputFile);
-    })
-    .catch(err => {
-      logger.error("Unable to process template file: %s", err);
-
-      // if the output file exists, then we are fine with continuing without
-      return fs.promises.access(bashTemplate.outputFile, fs.constants.R_OK);
-    })
-    .then(() => fs.promises.access(indexTemplate.outputFile, fs.constants.R_OK))
-    .catch(err => {
-      logger.error("Cannot proceed: %s", err);
-
-      process.exit(1);
-    });
-
   // serve landing page
   router.get("/", (_, res) => {
-    res.sendFile(path.join(HOST_DIR, "index.html"))
+    res.sendFile(path.join(HOST_DIR, "index.html"));
   });
 
   // serve script for posting coverage report
@@ -73,7 +39,8 @@ export default (metadata: Metadata): Router => {
     res.sendFile(path.join(__dirname, "..", "public", "static", "favicon.ico"));
   });
   router.use(
-    "/static", express.static(path.join(__dirname, "..", "public", "static"))
+    "/static",
+    express.static(path.join(__dirname, "..", "public", "static"))
   );
 
   // Upload HTML file
@@ -86,7 +53,7 @@ export default (metadata: Metadata): Router => {
       return res.status(401).send(Messages.InvalidToken);
     }
 
-    if (typeof format !== 'string' || !formats.listFormats().includes(format)) {
+    if (typeof format !== "string" || !formats.listFormats().includes(format)) {
       return res.status(406).send(Messages.InvalidFormat);
     }
 
@@ -149,9 +116,12 @@ export default (metadata: Metadata): Router => {
           result
             ? res.status(200).send()
             : res.status(500).send(Messages.UnknownError)
-        ).catch(err => {
-          logger.error(err ?? "Unknown error occurred while processing POST request");
-          return res.status(500).send(Messages.UnknownError)
+        )
+        .catch(err => {
+          logger.error(
+            err ?? "Unknown error occurred while processing POST request"
+          );
+          return res.status(500).send(Messages.UnknownError);
         });
     });
   });
@@ -189,7 +159,9 @@ export default (metadata: Metadata): Router => {
         }
       },
       err => {
-        logger.error(err ?? "Error occurred while fetching commit for GET request");
+        logger.error(
+          err ?? "Error occurred while fetching commit for GET request"
+        );
         res.status(500).send(Messages.UnknownError);
       }
     );
@@ -213,7 +185,9 @@ export default (metadata: Metadata): Router => {
         }
       },
       err => {
-        logger.error(err ?? "Error occurred while fetching commit for GET request");
+        logger.error(
+          err ?? "Error occurred while fetching commit for GET request"
+        );
         res.status(500).send(Messages.UnknownError);
       }
     );

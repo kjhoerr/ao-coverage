@@ -1,10 +1,10 @@
+const exit = jest
+  .spyOn(process, "exit")
+  .mockImplementation(() => undefined as never);
+
 import { configOrError, handleShutdown } from "./config";
 import { MongoClient } from "mongodb";
 import { Server } from "http";
-
-const exit = jest.spyOn(process, "exit").mockImplementation(() => {
-  throw Error("");
-});
 
 const CommonMocks = {
   connect: jest.fn(),
@@ -111,7 +111,7 @@ describe("handleShutdown", () => {
     }
 
     // Assert
-    expect(exit).toHaveBeenCalledWith(1);
+    expect(exit).toHaveBeenCalledWith(0);
   });
 
   it("should exit with error with Mongo error", async () => {

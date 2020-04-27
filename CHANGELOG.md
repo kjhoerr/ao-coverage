@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Moved startup processes to async handleStartup function
+- Fixed MongoErrors not reporting on startup
+
 ## [0.4.1]
 
 ### Changed
