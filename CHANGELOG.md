@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3]
+
+### Changed
+
+- Fixed templates not correctly identifying context in handleStartup
+
 ## [0.4.2]
 
 ### Added
@@ -116,6 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Code formatting using Prettier
 
 [unreleased]: https://git.submelon.dev/kjhoerr/ao-coverage/src/branch/trunk
+[0.4.3]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.4.3
 [0.4.2]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.4.2
 [0.4.1]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.4.1
 [0.4.0]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.4.0
