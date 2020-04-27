@@ -1,6 +1,9 @@
 {
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint"],
+  "plugins": [
+    "@typescript-eslint",
+    "eslint-plugin-tsdoc"
+  ],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
@@ -10,6 +13,7 @@
   ],
   "rules": {
     "no-var": "error",
+    "tsdoc/syntax": "warn",
     "no-constant-condition": "off"
   }
 }

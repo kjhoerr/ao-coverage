@@ -1,6 +1,6 @@
 {
   "name": "ao-coverage",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Simple code coverage storage and server",
   "repository": {
     "type": "git",
@@ -16,7 +16,8 @@
     "lint:fix": "eslint --fix 'src/**/*.ts'",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "doc": "typedoc src"
   },
   "author": "Kevin J Hoerr <kjhoerr@submelon.tech>",
   "license": "Parity-7.0.0",
@@ -35,6 +36,7 @@
     "winston": "^3.2.1"
   },
   "devDependencies": {
+    "@microsoft/tsdoc": "^0.12.19",
     "@types/jest": "^25.2.1",
     "@types/supertest": "^2.0.8",
     "@types/triple-beam": "^1.3.0",
@@ -43,12 +45,14 @@
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-prettier": "^3.1.3",
+    "eslint-plugin-tsdoc": "^0.2.4",
     "jest": "^25.4.0",
     "prettier": "^1.19.1",
     "supertest": "^4.0.2",
     "triple-beam": "^1.3.0",
     "ts-jest": "^25.4.0",
-    "tsc-watch": "^4.2.3"
+    "tsc-watch": "^4.2.3",
+    "typedoc": "^0.17.6"
   },
   "jest": {
     "preset": "ts-jest",

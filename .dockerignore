@@ -2,6 +2,7 @@
 .vscode
 build
 coverage
+docs
 example_reports
 .env*
 dist
