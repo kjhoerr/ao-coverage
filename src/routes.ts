@@ -217,5 +217,10 @@ export default (metadata: Metadata): Router => {
     retrieveFile(res, identity, "index.html");
   });
 
+  router.use((_, res) => {
+    res.status(404);
+    res.sendFile(path.join(__dirname, "..", "public", "static", "404.html"));
+  });
+
   return router;
 };

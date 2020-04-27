@@ -39,6 +39,10 @@ div#content p {
   padding: 0 10px;
 }
 
+div#smallcontent p {
+  text-align: center;
+}
+
 .code-container-container {
   margin: 24px;
 }
