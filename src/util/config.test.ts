@@ -2,9 +2,17 @@ const exit = jest
   .spyOn(process, "exit")
   .mockImplementation(() => undefined as never);
 
-import { configOrError, handleShutdown } from "./config";
-import { MongoClient } from "mongodb";
+import {
+  configOrError,
+  persistTemplate,
+  handleStartup,
+  handleShutdown
+} from "./config";
+import { MongoClient, MongoError } from "mongodb";
 import { Server } from "http";
+import path from "path";
+import fs from "fs";
+import * as templates from "../templates";
 
 const CommonMocks = {
   connect: jest.fn(),
@@ -89,6 +97,176 @@ describe("configOrError", () => {
     // Assert
     expect(result).toEqual(process.env.CHRYSANTHEMUM);
     expect(exit).toHaveBeenCalledTimes(0);
+  });
+});
+
+describe("persistTemplate", () => {
+  beforeEach(() => {
+    exit.mockClear();
+  });
+
+  it("should generate a template without error", async () => {
+    const template = {
+      inputFile: "/mnt/c/Windows/System32",
+      outputFile: "./helloworld.txt",
+      context: { EXAMPLE: "this" }
+    } as templates.Template;
+    const processTemplate = jest
+      .spyOn(templates, "default")
+      .mockImplementation(
+        (template: templates.Template) => new Promise(res => res(template))
+      );
+    const fsAccess = jest.spyOn(fs.promises, "access").mockResolvedValue();
+
+    await persistTemplate(template);
+
+    expect(processTemplate).toHaveBeenCalledWith(template);
+    expect(fsAccess).not.toHaveBeenCalled();
+    expect(exit).not.toHaveBeenCalled();
+    processTemplate.mockRestore();
+    fsAccess.mockRestore();
+  });
+
+  it("should exit without error if template does not generate but file already exists", async () => {
+    const template = {
+      inputFile: "/mnt/c/Windows/System32",
+      outputFile: "./helloworld.txt",
+      context: { EXAMPLE: "this" }
+    } as templates.Template;
+    const processTemplate = jest
+      .spyOn(templates, "default")
+      .mockRejectedValue("baa");
+    const fsAccess = jest.spyOn(fs.promises, "access").mockResolvedValue();
+
+    await persistTemplate(template);
+
+    expect(processTemplate).toHaveBeenCalledWith(template);
+    expect(fsAccess).toHaveBeenCalledWith(
+      template.outputFile,
+      fs.constants.R_OK
+    );
+    expect(exit).not.toHaveBeenCalled();
+    processTemplate.mockRestore();
+    fsAccess.mockRestore();
+  });
+
+  it("should exit with error if template does not generate and file does not exist", async () => {
+    const template = {
+      inputFile: "/mnt/c/Windows/System32",
+      outputFile: "./helloworld.txt",
+      context: { EXAMPLE: "this" }
+    } as templates.Template;
+    const processTemplate = jest
+      .spyOn(templates, "default")
+      .mockRejectedValue("baz");
+    const fsAccess = jest.spyOn(fs.promises, "access").mockRejectedValue("bar");
+
+    await persistTemplate(template);
+
+    expect(processTemplate).toHaveBeenCalledWith(template);
+    expect(fsAccess).toHaveBeenCalledWith(
+      template.outputFile,
+      fs.constants.R_OK
+    );
+    expect(exit).toHaveBeenCalledWith(1);
+    processTemplate.mockRestore();
+    fsAccess.mockRestore();
+  });
+});
+
+describe("handleStartup", () => {
+  beforeEach(() => {
+    exit.mockClear();
+  });
+
+  it("should pass back MongoClient", async () => {
+    const superClient = {} as MongoClient;
+    const fsAccess = jest.spyOn(fs.promises, "access").mockResolvedValue();
+    const pathAbsolute = jest.spyOn(path, "isAbsolute").mockReturnValue(true);
+    const pathJoin = jest.spyOn(path, "join").mockReturnValue("path");
+    const mongoClient = jest.spyOn(MongoClient, "connect").mockImplementation(
+      () => new Promise<MongoClient>(res => res(superClient))
+    );
+    const processTemplate = jest
+      .spyOn(templates, "default")
+      .mockImplementation(
+        (template: templates.Template) => new Promise(res => res(template))
+      );
+
+    const result = await handleStartup();
+
+    expect(fsAccess).toHaveBeenCalledTimes(1);
+    expect(pathAbsolute).toHaveBeenCalledTimes(1);
+    expect(mongoClient).toHaveBeenCalledTimes(1);
+    expect(processTemplate).toHaveBeenCalledTimes(2);
+    expect(exit).not.toHaveBeenCalled();
+    expect(result).toEqual(superClient);
+    processTemplate.mockRestore();
+    mongoClient.mockRestore();
+    pathAbsolute.mockRestore();
+    pathJoin.mockRestore();
+    fsAccess.mockRestore();
+  });
+
+  it("should exit if HOST_DIR is not read/write accessible", async () => {
+    const fsAccess = jest.spyOn(fs.promises, "access").mockRejectedValue("boo");
+    const pathAbsolute = jest.spyOn(path, "isAbsolute").mockReturnValue(true);
+    const pathJoin = jest.spyOn(path, "join").mockReturnValue("path");
+
+    const result = await handleStartup();
+
+    expect(fsAccess).toHaveBeenCalledTimes(1);
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(pathAbsolute).not.toHaveBeenCalled();
+    expect(result).toBeUndefined();
+    pathAbsolute.mockRestore();
+    pathJoin.mockRestore();
+    fsAccess.mockRestore();
+  });
+
+  it("should exit if HOST_DIR is not absolute path", async () => {
+    const superClient = {} as MongoClient;
+    const fsAccess = jest.spyOn(fs.promises, "access").mockResolvedValue();
+    const pathAbsolute = jest.spyOn(path, "isAbsolute").mockReturnValue(false);
+    const pathJoin = jest.spyOn(path, "join").mockReturnValue("path");
+    const mongoClient = jest.spyOn(MongoClient, "connect").mockImplementation(
+      () => new Promise<MongoClient>(res => res(superClient))
+    );
+
+    await handleStartup();
+
+    expect(pathAbsolute).toHaveBeenCalledTimes(1);
+    expect(exit).toHaveBeenCalledWith(1);
+    mongoClient.mockRestore();
+    pathAbsolute.mockRestore();
+    pathJoin.mockRestore();
+    fsAccess.mockRestore();
+  });
+
+  it("should exit if MongoClient has error", async () => {
+    const fsAccess = jest.spyOn(fs.promises, "access").mockResolvedValue();
+    const pathAbsolute = jest.spyOn(path, "isAbsolute").mockReturnValue(true);
+    const pathJoin = jest.spyOn(path, "join").mockReturnValue("path");
+    const mongoClient = jest
+      .spyOn(MongoClient, "connect")
+      .mockImplementation(
+        () => new Promise((_, rej) => rej({ message: "aaahhh" } as MongoError))
+      );
+    const processTemplate = jest
+      .spyOn(templates, "default")
+      .mockImplementation(
+        (template: templates.Template) => new Promise(res => res(template))
+      );
+
+    await handleStartup();
+
+    expect(mongoClient).toHaveBeenCalledTimes(1);
+    expect(exit).toHaveBeenCalledWith(1);
+    processTemplate.mockRestore();
+    mongoClient.mockRestore();
+    pathAbsolute.mockRestore();
+    pathJoin.mockRestore();
+    fsAccess.mockRestore();
   });
 });
 

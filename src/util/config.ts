@@ -57,12 +57,12 @@ export const handleStartup = async (): Promise<MongoClient> => {
       process.exit(1);
     }
 
-    const mongo = await new MongoClient(MONGO_URI, { useUnifiedTopology: true })
-      .connect()
-      .catch((err: MongoError) => {
-        logger.error(err.message ?? "Unable to connect to database");
-        process.exit(1);
-      });
+    const mongo = await MongoClient.connect(MONGO_URI, {
+      useUnifiedTopology: true
+    }).catch((err: MongoError) => {
+      logger.error(err.message ?? "Unable to connect to database");
+      process.exit(1);
+    });
 
     await persistTemplate({
       inputFile: path.join(

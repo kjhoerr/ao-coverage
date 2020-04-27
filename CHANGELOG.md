@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- 404 page to handle unknown paths
+
 ### Changed
 
 - Moved startup processes to async handleStartup function

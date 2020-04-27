@@ -117,6 +117,17 @@ describe("Static files", () => {
       .expect(200);
     expect(res.text).toEqual(buffer.toString("utf-8"));
   });
+
+  it("should return 404.html at unhandled endpoints", async () => {
+    const buffer = await fs.promises.readFile(
+      path.join(staticRoot, "404.html")
+    );
+
+    const res = await request()
+      .get("/thisisnotanendpoint")
+      .expect(404);
+    expect(res.text).toEqual(buffer.toString("utf-8"));
+  });
 });
 
 describe("Badges and reports", () => {
