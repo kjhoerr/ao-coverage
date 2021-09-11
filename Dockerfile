@@ -1,5 +1,5 @@
 # Stage 1. Base
-FROM node:carbon AS base
+FROM node:lts AS base
 WORKDIR /app
 
 # Stage 2. Dependencies
@@ -14,7 +14,7 @@ COPY tsconfig.json /app
 RUN npm run tsc
 
 # Stage 4. Release Image
-FROM node:alpine AS release
+FROM node:lts-alpine AS release
 WORKDIR /app
 
 COPY --from=dependencies /app/package.json ./

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Adjusted routes tests to fail properly if HOST_DIR is undefined or has insufficient access control
+- Updated node images used in Dockerfile
+
 ## [0.4.3]
 
 ### Changed
