@@ -8,7 +8,7 @@ import {
   handleStartup,
   handleShutdown
 } from "./config";
-import { MongoClient, MongoError } from "mongodb";
+import { MongoClient, MongoError, ReadPreference } from "mongodb";
 import { Server } from "http";
 import path from "path";
 import fs from "fs";
@@ -42,6 +42,14 @@ const MongoMock = (p: Promise<void>): jest.Mock<MongoClient, void[]> =>
   jest.fn<MongoClient, void[]>(() => ({
     ...CommonMocks,
     close: jest.fn(() => p),
+    readPreference: {
+      mode: ReadPreference.NEAREST,
+      tags: [],
+      isValid: jest.fn(),
+      slaveOk: jest.fn(),
+      equals: jest.fn()
+    },
+    writeConcern: {},
     db: jest.fn()
   }));
 const ServerMock = (mockErr: Error | undefined): jest.Mock<Server, void[]> =>
@@ -63,6 +71,7 @@ const ServerMock = (mockErr: Error | undefined): jest.Mock<Server, void[]> =>
     address: jest.fn(),
     getConnections: jest.fn(),
     ref: jest.fn(),
+    requestTimeout: 3600,
     unref: jest.fn()
   }));
 

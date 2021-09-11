@@ -1,3 +1,8 @@
+// The environment variable HOST_DIR must be defined for the tests to
+// work. Mocking exit gives a more descriptive error.
+const exit = jest
+  .spyOn(process, "exit")
+  .mockImplementation(() => undefined as never);
 import _request, { SuperTest, Test } from "supertest";
 import express from "express";
 import dotenv from "dotenv";
@@ -5,6 +10,18 @@ import fs from "fs";
 import path from "path";
 
 dotenv.config();
+
+test("Environment variable HOST_DIR must be defined", () => {
+  expect(process.env.HOST_DIR).not.toBeUndefined();
+});
+test("HOST_DIR must be readable and writable", () => {
+  expect(() =>
+    fs.accessSync(
+      process.env.HOST_DIR ?? "",
+      fs.constants.W_OK | fs.constants.R_OK
+    )
+  ).not.toThrowError();
+});
 
 process.env.UPLOAD_LIMIT = "40000";
 
@@ -35,7 +52,9 @@ const mock = (
   createRepository: jest.fn()
 });
 
-const request = (mockMeta: MetadataMockType = mock()): SuperTest<Test> => {
+const request = async (
+  mockMeta: MetadataMockType = mock()
+): Promise<SuperTest<Test>> => {
   const app = express();
 
   app.use(routes(mockMeta as Metadata, path.join(__dirname, "..", "public")));
@@ -61,9 +80,8 @@ describe("templates", () => {
         context: { TARGET_URL }
       } as Template);
 
-      const res = await request()
-        .get("/bash")
-        .expect(200);
+      const res = await (await request()).get("/bash").expect(200);
+      expect(exit).not.toHaveBeenCalled();
       expect(res.text).toMatch("curl -X POST");
       expect(res.text).toMatch(`url="${TARGET_URL}"`);
     });
@@ -83,10 +101,11 @@ describe("templates", () => {
         context: { TARGET_URL }
       } as Template);
 
-      const res = await request()
+      const res = await (await request())
         .get("/")
         .expect("Content-Type", /html/)
         .expect(200);
+      expect(exit).not.toHaveBeenCalled();
       expect(res.text).toMatch(`bash &lt;(curl -s ${TARGET_URL}/bash)`);
     });
   });
@@ -100,7 +119,7 @@ describe("Static files", () => {
       path.join(staticRoot, "favicon.ico")
     );
 
-    await request()
+    await (await request())
       .get("/favicon.ico")
       .expect("Content-Type", /icon/)
       .expect(buffer)
@@ -112,9 +131,7 @@ describe("Static files", () => {
       path.join(staticRoot, "index.css")
     );
 
-    const res = await request()
-      .get("/static/index.css")
-      .expect(200);
+    const res = await (await request()).get("/static/index.css").expect(200);
     expect(res.text).toEqual(buffer.toString("utf-8"));
   });
 
@@ -123,9 +140,7 @@ describe("Static files", () => {
       path.join(staticRoot, "404.html")
     );
 
-    const res = await request()
-      .get("/thisisnotanendpoint")
-      .expect(404);
+    const res = await (await request()).get("/thisisnotanendpoint").expect(404);
     expect(res.text).toEqual(buffer.toString("utf-8"));
   });
 });
@@ -162,7 +177,7 @@ describe("Badges and reports", () => {
 
   describe("GET /v1/:org/:repo/:branch/:commit.html", () => {
     it("should retrieve the stored report file", async () => {
-      const res = await request()
+      const res = await (await request())
         .get("/v1/testorg/testrepo/testbranch/testcommit.html")
         .expect("Content-Type", /html/)
         .expect(200);
@@ -172,7 +187,7 @@ describe("Badges and reports", () => {
     });
 
     it("should return 404 if file does not exist", async () => {
-      await request()
+      await (await request())
         .get("/v1/neorg/nerepo/nebranch/necommit.html")
         .expect(404);
     });
@@ -181,7 +196,7 @@ describe("Badges and reports", () => {
   describe("GET /v1/:org/:repo/:branch.html", () => {
     it("should retrieve the stored report file with the associated head commit", async () => {
       const mockMeta = mock();
-      const res = await request(mockMeta)
+      const res = await (await request(mockMeta))
         .get("/v1/testorg/testrepo/testbranch.html")
         .expect("Content-Type", /html/)
         .expect(200);
@@ -192,23 +207,21 @@ describe("Badges and reports", () => {
     });
 
     it("should return 404 if file does not exist", async () => {
-      await request()
-        .get("/v1/neorg/nerepo/nebranch.html")
-        .expect(404);
+      await (await request()).get("/v1/neorg/nerepo/nebranch.html").expect(404);
     });
 
     it("should return 404 if head commit not found", async () => {
       const head = jest.fn(
         () => new Promise(solv => solv(new BranchNotFoundError()))
       );
-      await request(mock(head))
+      await (await request(mock(head)))
         .get("/v1/testorg/testrepo/testbranch.html")
         .expect(404);
     });
 
     it("should return 500 if promise is rejected", async () => {
       const head = jest.fn(() => new Promise((_, rej) => rej("fooey")));
-      await request(mock(head))
+      await (await request(mock(head)))
         .get("/v1/testorg/testrepo/testbranch.html")
         .expect(500);
     });
@@ -216,7 +229,7 @@ describe("Badges and reports", () => {
 
   describe("GET /v1/:org/:repo/:branch/:commit.svg", () => {
     it("should retrieve the stored report badge", async () => {
-      const res = await request()
+      const res = await (await request())
         .get("/v1/testorg/testrepo/testbranch/testcommit.svg")
         .expect("Content-Type", /svg/)
         .expect(200);
@@ -225,7 +238,7 @@ describe("Badges and reports", () => {
     });
 
     it("should return 404 if file does not exist", async () => {
-      await request()
+      await (await request())
         .get("/v1/neorg/nerepo/nebranch/necommit.svg")
         .expect(404);
     });
@@ -234,7 +247,7 @@ describe("Badges and reports", () => {
   describe("GET /v1/:org/:repo/:branch.svg", () => {
     it("should retrieve the stored report badge with the associated head commit", async () => {
       const mockMeta = mock();
-      const res = await request(mockMeta)
+      const res = await (await request(mockMeta))
         .get("/v1/testorg/testrepo/testbranch.svg")
         .expect("Content-Type", /svg/)
         .expect(200);
@@ -244,23 +257,21 @@ describe("Badges and reports", () => {
     });
 
     it("should return 404 if file does not exist", async () => {
-      await request()
-        .get("/v1/neorg/nerepo/nebranch.svg")
-        .expect(404);
+      await (await request()).get("/v1/neorg/nerepo/nebranch.svg").expect(404);
     });
 
     it("should return 404 if head commit not found", async () => {
       const head = jest.fn(
         () => new Promise(solv => solv(new BranchNotFoundError()))
       );
-      await request(mock(head))
+      await (await request(mock(head)))
         .get("/v1/testorg/testrepo/testbranch.svg")
         .expect(404);
     });
 
     it("should return 500 if promise is rejected", async () => {
       const head = jest.fn(() => new Promise((_, rej) => rej("fooey")));
-      await request(mock(head))
+      await (await request(mock(head)))
         .get("/v1/testorg/testrepo/testbranch.svg")
         .expect(500);
     });
@@ -290,7 +301,7 @@ describe("Uploads", () => {
   describe("POST /v1/:org/:repo/:branch/:commit.html", () => {
     it("should upload the report and generate a badge", async () => {
       const mockMeta = mock();
-      await request(mockMeta)
+      await (await request(mockMeta))
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
         )
@@ -315,7 +326,7 @@ describe("Uploads", () => {
     });
 
     it("should return 401 when token is not correct", async () => {
-      await request()
+      await (await request())
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=wrong&format=tarpaulin`
         )
@@ -324,7 +335,7 @@ describe("Uploads", () => {
     });
 
     it("should return 406 with an invalid format", async () => {
-      await request()
+      await (await request())
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=pepperoni`
         )
@@ -333,7 +344,7 @@ describe("Uploads", () => {
     });
 
     it("should return 400 when request body is not the appropriate format", async () => {
-      await request()
+      await (await request())
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
         )
@@ -344,7 +355,7 @@ describe("Uploads", () => {
     it("should return 413 when request body is not the appropriate format", async () => {
       const file = await data;
       const bigData = Buffer.concat([file, file]);
-      await request()
+      await (await request())
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
         )
@@ -354,7 +365,7 @@ describe("Uploads", () => {
 
     it("should return 500 when Metadata does not create branch", async () => {
       const update = jest.fn(() => new Promise(solv => solv(false)));
-      await request(mock(jest.fn(), update))
+      await (await request(mock(jest.fn(), update)))
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
         )
@@ -364,7 +375,7 @@ describe("Uploads", () => {
 
     it("should return 500 when promise chain is rejected", async () => {
       const update = jest.fn(() => new Promise((_, rej) => rej("fooey 2")));
-      await request(mock(jest.fn(), update))
+      await (await request(mock(jest.fn(), update)))
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
         )

@@ -85,7 +85,7 @@ export default (metadata: Metadata, publicPath: string): Router => {
         )
         .then(
           style =>
-            new Promise(solv =>
+            new Promise<string>(solv =>
               solv(
                 badgen({
                   label: "coverage",
