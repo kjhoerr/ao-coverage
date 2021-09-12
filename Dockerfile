@@ -30,7 +30,7 @@ ENV NODE_ENV=production \
     HOST_DIR=/data
 
 RUN mkdir -p ${HOST_DIR}
-VOLUME [ ${HOST_DIR} ]
+VOLUME [ "${HOST_DIR}" ]
 EXPOSE ${PORT}
 
 CMD [ "node", "./build/index.js" ]
