@@ -1,19 +1,57 @@
 import express, { Router } from "express";
-import { JSDOM } from "jsdom";
 import { badgen } from "badgen";
 import winston from "winston";
 import path from "path";
 import fs from "fs";
 
-import formats from "./formats";
+import formats, { Format } from "./formats";
 import Metadata, { HeadIdentity } from "./metadata";
 import loggerConfig from "./util/logger";
-import { Messages } from "./errors";
+import { InvalidReportDocumentError, Messages } from "./errors";
 
 const logger = winston.createLogger(loggerConfig("HTTP"));
 
 export default (metadata: Metadata): Router => {
   const router = Router();
+
+  const commitFormatDocs = async (
+    contents: string,
+    identity: HeadIdentity,
+    formatter: Format
+  ): Promise<boolean | InvalidReportDocumentError> => {
+    const reportPath = path.join(
+      metadata.getHostDir(),
+      identity.organization,
+      identity.repository,
+      identity.branch,
+      identity.head
+    );
+    const coverage = formatter.parseCoverage(contents);
+    if (typeof coverage !== "number") {
+      return coverage;
+    }
+
+    // Create report directory if not exists
+    await fs.promises.mkdir(reportPath, { recursive: true });
+
+    // Create report badge
+    const style = metadata.getGradientStyle();
+    const badge = badgen({
+      label: "coverage",
+      status: Math.floor(coverage).toString() + "%",
+      color: formatter.matchColor(coverage, style)
+    });
+
+    // Write report and badge to directory
+    await fs.promises.writeFile(path.join(reportPath, "badge.svg"), badge);
+    await fs.promises.writeFile(
+      path.join(reportPath, formatter.fileName),
+      contents
+    );
+
+    // Update (or create) given branch with commit info
+    return await metadata.updateBranch(identity);
+  };
 
   // serve landing page
   router.get("/", (_, res) => {
@@ -68,57 +106,28 @@ export default (metadata: Metadata): Router => {
         return res.status(413).send(Messages.FileTooLarge);
       }
 
-      let coverage: number;
-      const doc = new JSDOM(contents).window.document;
       const formatter = formats.getFormat(format);
-
-      const result = formatter.parseCoverage(doc);
-      if (typeof result === "number") {
-        coverage = result;
-      } else {
-        return res.status(400).send(result.message);
-      }
-
-      const reportPath = path.join(
-        metadata.getHostDir(),
-        org,
-        repo,
+      const identity = {
+        organization: org,
+        repository: repo,
         branch,
-        commit
-      );
+        head: commit
+      };
 
       try {
-        // Create report directory if not exists
-        await fs.promises.mkdir(reportPath, { recursive: true });
+        const result = await commitFormatDocs(contents, identity, formatter);
 
-        // Create report badge
-        const style = metadata.getGradientStyle();
-        const badge = badgen({
-          label: "coverage",
-          status: Math.floor(coverage).toString() + "%",
-          color: formatter.matchColor(coverage, style)
-        });
-
-        // Write report and badge to directory
-        await fs.promises.writeFile(path.join(reportPath, "badge.svg"), badge);
-        await fs.promises.writeFile(
-          path.join(reportPath, formatter.fileName),
-          contents
-        );
-
-        // Update (or create) given branch with commit info
-        const branchUpdate = await metadata.updateBranch({
-          organization: org,
-          repository: repo,
-          branch,
-          head: commit
-        });
-
-        if (branchUpdate) {
-          return res.status(200).send();
+        if (typeof result === "boolean") {
+          if (result) {
+            return res.status(200).send();
+          } else {
+            logger.error(
+              "Unknown error while attempting to commit branch update"
+            );
+            return res.status(500).send(Messages.UnknownError);
+          }
         } else {
-          logger.error("Branch update failed");
-          return res.status(500).send(Messages.UnknownError);
+          return res.status(400).send(Messages.InvalidFormat);
         }
       } catch (err) {
         logger.error(

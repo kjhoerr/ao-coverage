@@ -1,10 +1,11 @@
+import { JSDOM } from "jsdom";
 import { InvalidReportDocumentError } from "./errors";
 
 type CoverageResult = number | InvalidReportDocumentError;
 
 export interface Format {
   // returns the coverage value as %: Number(90.0), Number(100.0), Number(89.5)
-  parseCoverage: (file: Document) => CoverageResult;
+  parseCoverage: (contents: string) => CoverageResult;
   matchColor: (coverage: number, style: GradientStyle) => string;
   fileName: string;
 }
@@ -45,7 +46,8 @@ export const defaultColorMatches = (
 const FormatsObj: FormatObj = {
   formats: {
     tarpaulin: {
-      parseCoverage: (file: Document): CoverageResult => {
+      parseCoverage: (contents: string): CoverageResult => {
+        const file = new JSDOM(contents).window.document;
         const scripts = file.getElementsByTagName("script");
         if (scripts.length === 0) {
           return new InvalidReportDocumentError();

@@ -1,7 +1,6 @@
 import Formats, { defaultColorMatches } from "./formats";
 import fs from "fs";
 import path from "path";
-import { JSDOM } from "jsdom";
 
 describe("Color matcher", () => {
   it.each`
@@ -109,12 +108,11 @@ describe("Tarpaulin format", () => {
   it("should parse coverage from a normal tarpaulin file", () => {
     // Arrange
     const file = fs.readFileSync(reportPath("tarpaulin-report.html"), "utf-8");
-    const document = new JSDOM(file).window.document;
 
     const format = Formats.getFormat("tarpaulin");
 
     // Act
-    const result = format.parseCoverage(document);
+    const result = format.parseCoverage(file);
 
     // Assert
     expect(typeof result).toEqual("number");
@@ -127,12 +125,11 @@ describe("Tarpaulin format", () => {
   it("should parse coverage from an empty tarpaulin file", () => {
     // Arrange
     const file = fs.readFileSync(reportPath("tarpaulin-empty.html"), "utf-8");
-    const document = new JSDOM(file).window.document;
 
     const format = Formats.getFormat("tarpaulin");
 
     // Act
-    const result = format.parseCoverage(document);
+    const result = format.parseCoverage(file);
 
     // Assert
     expect(typeof result).toEqual("number");
@@ -144,12 +141,11 @@ describe("Tarpaulin format", () => {
   it("should return error when parsing coverage from invalid file", () => {
     // Arrange
     const file = fs.readFileSync(reportPath("tarpaulin-invalid.html"), "utf-8");
-    const document = new JSDOM(file).window.document;
 
     const format = Formats.getFormat("tarpaulin");
 
     // Act
-    const result = format.parseCoverage(document);
+    const result = format.parseCoverage(file);
 
     // Assert
     expect(typeof result).not.toEqual("number");
