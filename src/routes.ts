@@ -102,7 +102,7 @@ export default (metadata: Metadata): Router => {
         // Write report and badge to directory
         await fs.promises.writeFile(path.join(reportPath, "badge.svg"), badge);
         await fs.promises.writeFile(
-          path.join(reportPath, "index.html"),
+          path.join(reportPath, formatter.fileName),
           contents
         );
 

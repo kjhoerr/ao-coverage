@@ -6,6 +6,7 @@ export interface Format {
   // returns the coverage value as %: Number(90.0), Number(100.0), Number(89.5)
   parseCoverage: (file: Document) => CoverageResult;
   matchColor: (coverage: number, style: GradientStyle) => string;
+  fileName: string;
 }
 
 interface FormatList {
@@ -70,7 +71,8 @@ const FormatsObj: FormatObj = {
         }
         return (100 * covered) / coverable;
       },
-      matchColor: defaultColorMatches
+      matchColor: defaultColorMatches,
+      fileName: "index.html"
     }
   },
 
