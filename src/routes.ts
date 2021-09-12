@@ -7,37 +7,36 @@ import fs from "fs";
 
 import formats, { GradientStyle } from "./formats";
 import Metadata, { HeadIdentity } from "./metadata";
-import { configOrError } from "./util/config";
 import loggerConfig from "./util/logger";
 import { Messages } from "./errors";
 
-const UPLOAD_LIMIT = Number(process.env.UPLOAD_LIMIT ?? 4194304);
-const HOST_DIR = configOrError("HOST_DIR");
-
 const logger = winston.createLogger(loggerConfig("HTTP"));
 
-export default (metadata: Metadata, publicPath: string): Router => {
+export default (metadata: Metadata): Router => {
   const router = Router();
 
   // serve landing page
   router.get("/", (_, res) => {
-    res.sendFile(path.join(HOST_DIR, "index.html"));
+    res.sendFile(path.join(metadata.getHostDir(), "index.html"));
   });
 
   // serve script for posting coverage report
   router.use(
     "/bash",
-    express.static(path.join(HOST_DIR, "bash"), {
+    express.static(path.join(metadata.getHostDir(), "bash"), {
       setHeaders: res => res.contentType("text/plain")
     })
   );
 
   // favicon should be served directly on root
   router.get("/favicon.ico", (_, res) => {
-    res.sendFile(path.join(publicPath, "static", "favicon.ico"));
+    res.sendFile(path.join(metadata.getPublicDir(), "static", "favicon.ico"));
   });
   // serve static files
-  router.use("/static", express.static(path.join(publicPath, "static")));
+  router.use(
+    "/static",
+    express.static(path.join(metadata.getPublicDir(), "static"))
+  );
 
   // Upload HTML file
   router.post("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
@@ -53,8 +52,9 @@ export default (metadata: Metadata, publicPath: string): Router => {
     }
 
     let contents = "";
+    const limit = metadata.getUploadLimit();
     req.on("data", raw => {
-      if (contents.length + raw.length > UPLOAD_LIMIT) {
+      if (contents.length + raw.length > limit) {
         res.status(413).send(Messages.FileTooLarge);
       } else {
         contents += raw;
@@ -72,7 +72,13 @@ export default (metadata: Metadata, publicPath: string): Router => {
         return res.status(400).send(result.message);
       }
 
-      const reportPath = path.join(HOST_DIR, org, repo, branch, commit);
+      const reportPath = path.join(
+        metadata.getHostDir(),
+        org,
+        repo,
+        branch,
+        commit
+      );
 
       fs.promises
         .mkdir(reportPath, { recursive: true })
@@ -128,7 +134,14 @@ export default (metadata: Metadata, publicPath: string): Router => {
   ): void => {
     const { organization: org, repository: repo, branch, head } = identity;
 
-    const pathname = path.join(HOST_DIR, org, repo, branch, head, file);
+    const pathname = path.join(
+      metadata.getHostDir(),
+      org,
+      repo,
+      branch,
+      head,
+      file
+    );
     fs.access(pathname, fs.constants.R_OK, err =>
       err === null
         ? res.sendFile(pathname)
@@ -214,7 +227,7 @@ export default (metadata: Metadata, publicPath: string): Router => {
 
   router.use((_, res) => {
     res.status(404);
-    res.sendFile(path.join(publicPath, "static", "404.html"));
+    res.sendFile(path.join(metadata.getPublicDir(), "static", "404.html"));
   });
 
   return router;

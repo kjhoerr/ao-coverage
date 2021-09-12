@@ -27,7 +27,7 @@ process.env.UPLOAD_LIMIT = "40000";
 
 import { configOrError, persistTemplate } from "./util/config";
 import routes from "./routes";
-import Metadata from "./metadata";
+import Metadata, { EnvConfig } from "./metadata";
 import { Template } from "./templates";
 import { Db } from "mongodb";
 import { badgen } from "badgen";
@@ -35,14 +35,23 @@ import { BranchNotFoundError } from "./errors";
 
 type MetadataMockType = {
   database: Db;
-  token: string;
+  config: EnvConfig;
   getHeadCommit: jest.Mock;
   getToken: jest.Mock;
+  getUploadLimit: jest.Mock;
+  getHostDir: jest.Mock;
+  getPublicDir: jest.Mock;
   updateBranch: jest.Mock;
   createRepository: jest.Mock;
 };
 
-const TOKEN = "THISISCORRECT";
+const config = {
+  token: "THISISCORRECT",
+  // should be just larger than the example report used
+  uploadLimit: Number(40000),
+  hostDir: configOrError("HOST_DIR"),
+  publicDir: path.join(__dirname, "..", "public")
+};
 const mock = (
   headCommit: jest.Mock = jest.fn(
     () => new Promise(solv => solv("testcommit"))
@@ -50,8 +59,11 @@ const mock = (
   updateBranch: jest.Mock = jest.fn(() => new Promise(solv => solv(true)))
 ): MetadataMockType => ({
   database: {} as Db,
-  token: TOKEN,
-  getToken: jest.fn(() => TOKEN),
+  config: config,
+  getToken: jest.fn(() => config.token),
+  getUploadLimit: jest.fn(() => config.uploadLimit),
+  getHostDir: jest.fn(() => config.hostDir),
+  getPublicDir: jest.fn(() => config.publicDir),
   getHeadCommit: headCommit,
   updateBranch: updateBranch,
   createRepository: jest.fn()
@@ -62,7 +74,7 @@ const request = async (
 ): Promise<SuperTest<Test>> => {
   const app = express();
 
-  app.use(routes(mockMeta as Metadata, path.join(__dirname, "..", "public")));
+  app.use(routes(mockMeta as Metadata));
   return _request(app);
 };
 
@@ -307,7 +319,7 @@ describe("Uploads", () => {
       const mockMeta = mock();
       await (await request(mockMeta))
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
+          `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
         )
         .send(await data)
         .expect(200);
@@ -341,7 +353,7 @@ describe("Uploads", () => {
     it("should return 406 with an invalid format", async () => {
       await (await request())
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=pepperoni`
+          `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=pepperoni`
         )
         .send(await data)
         .expect(406);
@@ -350,7 +362,7 @@ describe("Uploads", () => {
     it("should return 400 when request body is not the appropriate format", async () => {
       await (await request())
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
+          `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
         )
         .send("This is not a file")
         .expect(400);
@@ -361,7 +373,7 @@ describe("Uploads", () => {
       const bigData = Buffer.concat([file, file]);
       await (await request())
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
+          `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
         )
         .send(bigData)
         .expect(413);
@@ -371,7 +383,7 @@ describe("Uploads", () => {
       const update = jest.fn(() => new Promise(solv => solv(false)));
       await (await request(mock(jest.fn(), update)))
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
+          `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
         )
         .send(await data)
         .expect(500);
@@ -381,7 +393,7 @@ describe("Uploads", () => {
       const update = jest.fn(() => new Promise((_, rej) => rej("fooey 2")));
       await (await request(mock(jest.fn(), update)))
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
+          `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
         )
         .send(await data)
         .expect(500);

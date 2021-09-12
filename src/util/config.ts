@@ -6,6 +6,7 @@ import fs from "fs";
 
 import loggerConfig from "./logger";
 import processTemplate, { Template } from "../templates";
+import { EnvConfig } from "../metadata";
 
 const logger = winston.createLogger(loggerConfig("ROOT"));
 
@@ -47,11 +48,11 @@ export const persistTemplate = async (input: Template): Promise<void> => {
 
 export const handleStartup = async (
   mongoUri: string,
-  hostDir: string,
-  publicPath: string,
+  config: EnvConfig,
   targetUrl: string
 ): Promise<MongoClient> => {
   try {
+    const { hostDir, publicDir } = config;
     await fs.promises.access(hostDir, fs.constants.R_OK | fs.constants.W_OK);
     if (!path.isAbsolute(hostDir)) {
       await Promise.reject("hostDir must be an absolute path");
@@ -64,12 +65,12 @@ export const handleStartup = async (
     );
 
     await persistTemplate({
-      inputFile: path.join(publicPath, "templates", "bash.template"),
+      inputFile: path.join(publicDir, "templates", "bash.template"),
       outputFile: path.join(hostDir, "bash"),
       context: { TARGET_URL: targetUrl }
     } as Template);
     await persistTemplate({
-      inputFile: path.join(publicPath, "templates", "index.html.template"),
+      inputFile: path.join(publicDir, "templates", "index.html.template"),
       outputFile: path.join(hostDir, "index.html"),
       context: { TARGET_URL: targetUrl }
     } as Template);

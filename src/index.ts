@@ -7,7 +7,7 @@ import path from "path";
 dotenv.config();
 
 import routes from "./routes";
-import Metadata from "./metadata";
+import Metadata, { EnvConfig } from "./metadata";
 import loggerConfig from "./util/logger";
 import { configOrError, handleStartup, handleShutdown } from "./util/config";
 
@@ -17,15 +17,18 @@ const MONGO_DB = process.env.MONGO_DB ?? "ao-coverage";
 const PORT = Number(process.env.PORT ?? 3000);
 const MONGO_URI = configOrError("MONGO_URI");
 const TARGET_URL = process.env.TARGET_URL ?? "http://localhost:3000";
-const PUBLIC_PATH = path.join(__dirname, "..", "public");
-const HOST_DIR = configOrError("HOST_DIR");
-const TOKEN = process.env.TOKEN ?? "";
+const ENV_CONFIG: EnvConfig = {
+  token: process.env.TOKEN ?? "",
+  uploadLimit: Number(process.env.UPLOAD_LIMIT ?? 4194304),
+  publicDir: path.join(__dirname, "..", "public"),
+  hostDir: configOrError("HOST_DIR")
+};
 
 const logger = winston.createLogger(loggerConfig("ROOT"));
 
-handleStartup(MONGO_URI, HOST_DIR, PUBLIC_PATH, TARGET_URL).then(mongo => {
+handleStartup(MONGO_URI, ENV_CONFIG, TARGET_URL).then(mongo => {
   const app: express.Application = express();
-  const metadata = new Metadata(mongo.db(MONGO_DB), TOKEN);
+  const metadata = new Metadata(mongo.db(MONGO_DB), ENV_CONFIG);
 
   app.use(
     expressWinston.logger({
@@ -38,7 +41,7 @@ handleStartup(MONGO_URI, HOST_DIR, PUBLIC_PATH, TARGET_URL).then(mongo => {
   );
 
   // actual app routes
-  app.use(routes(metadata, PUBLIC_PATH));
+  app.use(routes(metadata));
 
   app.use(expressWinston.errorLogger(loggerConfig("_ERR")));
 

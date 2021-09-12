@@ -27,17 +27,36 @@ export interface Repository {
 
 const logger = winston.createLogger(loggerConfig("META"));
 
+export interface EnvConfig {
+  token: string;
+  uploadLimit: number;
+  hostDir: string;
+  publicDir: string;
+}
+
 class Metadata {
   database: Db;
-  token: string;
+  config: EnvConfig;
 
-  constructor(client: Db, token: string) {
+  constructor(client: Db, data: EnvConfig) {
     this.database = client;
-    this.token = token;
+    this.config = data;
   }
 
   getToken(): string {
-    return this.token;
+    return this.config.token;
+  }
+
+  getUploadLimit(): number {
+    return this.config.uploadLimit;
+  }
+
+  getHostDir(): string {
+    return this.config.hostDir;
+  }
+
+  getPublicDir(): string {
+    return this.config.publicDir;
   }
 
   async getHeadCommit(

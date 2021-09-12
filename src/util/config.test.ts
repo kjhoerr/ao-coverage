@@ -13,6 +13,7 @@ import { Server } from "http";
 import path from "path";
 import fs from "fs";
 import * as templates from "../templates";
+import { EnvConfig } from "../metadata";
 
 const CommonMocks = {
   connect: jest.fn(),
@@ -188,8 +189,12 @@ describe("handleStartup", () => {
     exit.mockClear();
   });
 
+  const config = {
+    hostDir: "/apple",
+    publicDir: "/public"
+  } as EnvConfig;
   const confStartup = (): Promise<MongoClient> =>
-    handleStartup("", "/apple", "/public", "localhost");
+    handleStartup("", config, "localhost");
 
   it("should pass back MongoClient", async () => {
     const superClient = {} as MongoClient;

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Adjusted routes tests to fail properly if HOST_DIR is undefined or has insufficient access control
 - Updated node images used in Dockerfile
+- Moved environment configuration used in service to Metadata data handler
 
 ## [0.4.3]
 
