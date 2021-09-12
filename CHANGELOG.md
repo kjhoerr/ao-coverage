@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.4]
+
 ### Changed
 
 - Adjusted routes tests to fail properly if HOST_DIR is undefined or has insufficient access control
@@ -128,6 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Code formatting using Prettier
 
 [unreleased]: https://git.submelon.dev/kjhoerr/ao-coverage/src/branch/trunk
+[0.4.4]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.4.4
 [0.4.3]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.4.3
 [0.4.2]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.4.2
 [0.4.1]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.4.1
