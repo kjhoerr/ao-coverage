@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Moved stage values for gradient to environment and made accessible via metadata
+- Refactored upload processing to async/await over promise chaining
+
 ## [0.4.4]
 
 ### Changed

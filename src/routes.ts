@@ -5,7 +5,7 @@ import winston from "winston";
 import path from "path";
 import fs from "fs";
 
-import formats, { GradientStyle } from "./formats";
+import formats from "./formats";
 import Metadata, { HeadIdentity } from "./metadata";
 import loggerConfig from "./util/logger";
 import { Messages } from "./errors";
@@ -51,16 +51,23 @@ export default (metadata: Metadata): Router => {
       return res.status(406).send(Messages.InvalidFormat);
     }
 
-    let contents = "";
     const limit = metadata.getUploadLimit();
+    if (Number(req.headers["content-length"] ?? 0) > limit) {
+      return res.status(413).send(Messages.FileTooLarge);
+    }
+
+    let contents = "";
     req.on("data", raw => {
-      if (contents.length + raw.length > limit) {
-        res.status(413).send(Messages.FileTooLarge);
-      } else {
+      if (contents.length <= limit) {
         contents += raw;
       }
     });
-    req.on("end", () => {
+    req.on("end", async () => {
+      // Ignore large requests
+      if (contents.length > limit) {
+        return res.status(413).send(Messages.FileTooLarge);
+      }
+
       let coverage: number;
       const doc = new JSDOM(contents).window.document;
       const formatter = formats.getFormat(format);
@@ -80,50 +87,45 @@ export default (metadata: Metadata): Router => {
         commit
       );
 
-      fs.promises
-        .mkdir(reportPath, { recursive: true })
-        .then(
-          () =>
-            //TODO @Metadata stage values should come from metadata
-            new Promise<GradientStyle>(solv => solv({ stage1: 95, stage2: 80 }))
-        )
-        .then(
-          style =>
-            new Promise<string>(solv =>
-              solv(
-                badgen({
-                  label: "coverage",
-                  status: Math.floor(coverage).toString() + "%",
-                  color: formatter.matchColor(coverage, style)
-                })
-              )
-            )
-        )
-        .then(badge =>
-          fs.promises.writeFile(path.join(reportPath, "badge.svg"), badge)
-        )
-        .then(() =>
-          fs.promises.writeFile(path.join(reportPath, "index.html"), contents)
-        )
-        .then(() =>
-          metadata.updateBranch({
-            organization: org,
-            repository: repo,
-            branch,
-            head: commit
-          })
-        )
-        .then(result =>
-          result
-            ? res.status(200).send()
-            : res.status(500).send(Messages.UnknownError)
-        )
-        .catch(err => {
-          logger.error(
-            err ?? "Unknown error occurred while processing POST request"
-          );
-          return res.status(500).send(Messages.UnknownError);
+      try {
+        // Create report directory if not exists
+        await fs.promises.mkdir(reportPath, { recursive: true });
+
+        // Create report badge
+        const style = metadata.getGradientStyle();
+        const badge = badgen({
+          label: "coverage",
+          status: Math.floor(coverage).toString() + "%",
+          color: formatter.matchColor(coverage, style)
         });
+
+        // Write report and badge to directory
+        await fs.promises.writeFile(path.join(reportPath, "badge.svg"), badge);
+        await fs.promises.writeFile(
+          path.join(reportPath, "index.html"),
+          contents
+        );
+
+        // Update (or create) given branch with commit info
+        const branchUpdate = await metadata.updateBranch({
+          organization: org,
+          repository: repo,
+          branch,
+          head: commit
+        });
+
+        if (branchUpdate) {
+          return res.status(200).send();
+        } else {
+          logger.error("Branch update failed");
+          return res.status(500).send(Messages.UnknownError);
+        }
+      } catch (err) {
+        logger.error(
+          err ?? "Unknown error occurred while processing POST request"
+        );
+        return res.status(500).send(Messages.UnknownError);
+      }
     });
   });
 

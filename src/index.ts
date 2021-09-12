@@ -21,7 +21,9 @@ const ENV_CONFIG: EnvConfig = {
   token: process.env.TOKEN ?? "",
   uploadLimit: Number(process.env.UPLOAD_LIMIT ?? 4194304),
   publicDir: path.join(__dirname, "..", "public"),
-  hostDir: configOrError("HOST_DIR")
+  hostDir: configOrError("HOST_DIR"),
+  stage1: Number(process.env.STAGE_1 ?? 95),
+  stage2: Number(process.env.STAGE_2 ?? 80)
 };
 
 const logger = winston.createLogger(loggerConfig("ROOT"));

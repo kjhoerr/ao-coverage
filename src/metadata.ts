@@ -3,6 +3,7 @@ import winston from "winston";
 
 import loggerConfig from "./util/logger";
 import { BranchNotFoundError } from "./errors";
+import { GradientStyle } from "./formats";
 
 interface Branch {
   head: string;
@@ -32,6 +33,8 @@ export interface EnvConfig {
   uploadLimit: number;
   hostDir: string;
   publicDir: string;
+  stage1: number;
+  stage2: number;
 }
 
 class Metadata {
@@ -57,6 +60,13 @@ class Metadata {
 
   getPublicDir(): string {
     return this.config.publicDir;
+  }
+
+  getGradientStyle(): GradientStyle {
+    return {
+      stage1: this.config.stage1,
+      stage2: this.config.stage2
+    };
   }
 
   async getHeadCommit(

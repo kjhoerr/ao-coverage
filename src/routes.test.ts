@@ -23,8 +23,6 @@ test("HOST_DIR must be readable and writable", () => {
   ).not.toThrowError();
 });
 
-process.env.UPLOAD_LIMIT = "40000";
-
 import { configOrError, persistTemplate } from "./util/config";
 import routes from "./routes";
 import Metadata, { EnvConfig } from "./metadata";
@@ -41,6 +39,7 @@ type MetadataMockType = {
   getUploadLimit: jest.Mock;
   getHostDir: jest.Mock;
   getPublicDir: jest.Mock;
+  getGradientStyle: jest.Mock;
   updateBranch: jest.Mock;
   createRepository: jest.Mock;
 };
@@ -50,7 +49,9 @@ const config = {
   // should be just larger than the example report used
   uploadLimit: Number(40000),
   hostDir: configOrError("HOST_DIR"),
-  publicDir: path.join(__dirname, "..", "public")
+  publicDir: path.join(__dirname, "..", "public"),
+  stage1: 95,
+  stage2: 80
 };
 const mock = (
   headCommit: jest.Mock = jest.fn(
@@ -64,6 +65,10 @@ const mock = (
   getUploadLimit: jest.fn(() => config.uploadLimit),
   getHostDir: jest.fn(() => config.hostDir),
   getPublicDir: jest.fn(() => config.publicDir),
+  getGradientStyle: jest.fn(() => ({
+    stage1: config.stage1,
+    stage2: config.stage2
+  })),
   getHeadCommit: headCommit,
   updateBranch: updateBranch,
   createRepository: jest.fn()
