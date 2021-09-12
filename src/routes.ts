@@ -11,7 +11,6 @@ import { configOrError } from "./util/config";
 import loggerConfig from "./util/logger";
 import { Messages } from "./errors";
 
-const TOKEN = process.env.TOKEN ?? "";
 const UPLOAD_LIMIT = Number(process.env.UPLOAD_LIMIT ?? 4194304);
 const HOST_DIR = configOrError("HOST_DIR");
 
@@ -45,8 +44,7 @@ export default (metadata: Metadata, publicPath: string): Router => {
     const { org, repo, branch, commit } = req.params;
 
     const { token, format } = req.query;
-    //TODO @Metadata token should come from metadata
-    if (token != TOKEN) {
+    if (token != metadata.getToken()) {
       return res.status(401).send(Messages.InvalidToken);
     }
 

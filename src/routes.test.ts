@@ -35,11 +35,14 @@ import { BranchNotFoundError } from "./errors";
 
 type MetadataMockType = {
   database: Db;
+  token: string;
   getHeadCommit: jest.Mock;
+  getToken: jest.Mock;
   updateBranch: jest.Mock;
   createRepository: jest.Mock;
 };
 
+const TOKEN = "THISISCORRECT";
 const mock = (
   headCommit: jest.Mock = jest.fn(
     () => new Promise(solv => solv("testcommit"))
@@ -47,6 +50,8 @@ const mock = (
   updateBranch: jest.Mock = jest.fn(() => new Promise(solv => solv(true)))
 ): MetadataMockType => ({
   database: {} as Db,
+  token: TOKEN,
+  getToken: jest.fn(() => TOKEN),
   getHeadCommit: headCommit,
   updateBranch: updateBranch,
   createRepository: jest.fn()
@@ -63,7 +68,6 @@ const request = async (
 
 const HOST_DIR = configOrError("HOST_DIR");
 const TARGET_URL = process.env.TARGET_URL ?? "http://localhost:3000";
-const TOKEN = process.env.TOKEN ?? "";
 
 describe("templates", () => {
   describe("GET /bash", () => {

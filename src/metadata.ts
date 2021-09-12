@@ -29,9 +29,15 @@ const logger = winston.createLogger(loggerConfig("META"));
 
 class Metadata {
   database: Db;
+  token: string;
 
-  constructor(client: Db) {
+  constructor(client: Db, token: string) {
     this.database = client;
+    this.token = token;
+  }
+
+  getToken(): string {
+    return this.token;
   }
 
   async getHeadCommit(

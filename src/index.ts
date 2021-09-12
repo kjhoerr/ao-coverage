@@ -19,12 +19,13 @@ const MONGO_URI = configOrError("MONGO_URI");
 const TARGET_URL = process.env.TARGET_URL ?? "http://localhost:3000";
 const PUBLIC_PATH = path.join(__dirname, "..", "public");
 const HOST_DIR = configOrError("HOST_DIR");
+const TOKEN = process.env.TOKEN ?? "";
 
 const logger = winston.createLogger(loggerConfig("ROOT"));
 
 handleStartup(MONGO_URI, HOST_DIR, PUBLIC_PATH, TARGET_URL).then(mongo => {
   const app: express.Application = express();
-  const metadata = new Metadata(mongo.db(MONGO_DB));
+  const metadata = new Metadata(mongo.db(MONGO_DB), TOKEN);
 
   app.use(
     expressWinston.logger({
