@@ -38,8 +38,7 @@ export const defaultColorMatches = (
           16 +
         76
       : 225 + Math.floor(coverage / (style.stage2 / 11));
-  const result = gradient.toString(16);
-  return (result.length === 1 ? "0" : "") + result + "1";
+  return gradient.toString(16) + "1";
 };
 
 const FormatsObj: FormatObj = {
