@@ -174,11 +174,17 @@ describe("Badges and reports", () => {
     "testbranch",
     "testcommit"
   );
-  const actualReport = path.join(
+  const tarpaulinReport = path.join(
     __dirname,
     "..",
     "example_reports",
     "tarpaulin-report.html"
+  );
+  const coberturaReport = path.join(
+    __dirname,
+    "..",
+    "example_reports",
+    "cobertura-report.xml"
   );
   const fakeBadge = badgen({
     label: "coverage",
@@ -190,8 +196,12 @@ describe("Badges and reports", () => {
     // place test files on HOST_DIR
     await fs.promises.mkdir(reportPath, { recursive: true });
     await fs.promises.copyFile(
-      actualReport,
+      tarpaulinReport,
       path.join(reportPath, "index.html")
+    );
+    await fs.promises.copyFile(
+      coberturaReport,
+      path.join(reportPath, "index.xml")
     );
     await fs.promises.writeFile(path.join(reportPath, "badge.svg"), fakeBadge);
   });
@@ -202,7 +212,7 @@ describe("Badges and reports", () => {
         .get("/v1/testorg/testrepo/testbranch/testcommit.html")
         .expect("Content-Type", /html/)
         .expect(200);
-      const buffer = await fs.promises.readFile(actualReport);
+      const buffer = await fs.promises.readFile(tarpaulinReport);
 
       expect(res.text).toEqual(buffer.toString("utf-8"));
     });
@@ -214,6 +224,24 @@ describe("Badges and reports", () => {
     });
   });
 
+  describe("GET /v1/:org/:repo/:branch/:commit.xml", () => {
+    it("should retrieve the stored report file", async () => {
+      const res = await (await request())
+        .get("/v1/testorg/testrepo/testbranch/testcommit.xml")
+        .expect("Content-Type", /xml/)
+        .expect(200);
+      const buffer = await fs.promises.readFile(coberturaReport);
+
+      expect(res.text).toEqual(buffer.toString("utf-8"));
+    });
+
+    it("should return 404 if file does not exist", async () => {
+      await (await request())
+        .get("/v1/neorg/nerepo/nebranch/necommit.xml")
+        .expect(404);
+    });
+  });
+
   describe("GET /v1/:org/:repo/:branch.html", () => {
     it("should retrieve the stored report file with the associated head commit", async () => {
       const mockMeta = mock();
@@ -221,7 +249,7 @@ describe("Badges and reports", () => {
         .get("/v1/testorg/testrepo/testbranch.html")
         .expect("Content-Type", /html/)
         .expect(200);
-      const buffer = await fs.promises.readFile(actualReport);
+      const buffer = await fs.promises.readFile(tarpaulinReport);
 
       expect(mockMeta.getHeadCommit).toHaveBeenCalledTimes(1);
       expect(res.text).toEqual(buffer.toString("utf-8"));
@@ -244,6 +272,40 @@ describe("Badges and reports", () => {
       const head = jest.fn(() => new Promise((_, rej) => rej("fooey")));
       await (await request(mock(head)))
         .get("/v1/testorg/testrepo/testbranch.html")
+        .expect(500);
+    });
+  });
+
+  describe("GET /v1/:org/:repo/:branch.xml", () => {
+    it("should retrieve the stored report file with the associated head commit", async () => {
+      const mockMeta = mock();
+      const res = await (await request(mockMeta))
+        .get("/v1/testorg/testrepo/testbranch.xml")
+        .expect("Content-Type", /xml/)
+        .expect(200);
+      const buffer = await fs.promises.readFile(coberturaReport);
+
+      expect(mockMeta.getHeadCommit).toHaveBeenCalledTimes(1);
+      expect(res.text).toEqual(buffer.toString("utf-8"));
+    });
+
+    it("should return 404 if file does not exist", async () => {
+      await (await request()).get("/v1/neorg/nerepo/nebranch.xml").expect(404);
+    });
+
+    it("should return 404 if head commit not found", async () => {
+      const head = jest.fn(
+        () => new Promise(solv => solv(new BranchNotFoundError()))
+      );
+      await (await request(mock(head)))
+        .get("/v1/testorg/testrepo/testbranch.xml")
+        .expect(404);
+    });
+
+    it("should return 500 if promise is rejected", async () => {
+      const head = jest.fn(() => new Promise((_, rej) => rej("fooey")));
+      await (await request(mock(head)))
+        .get("/v1/testorg/testrepo/testbranch.xml")
         .expect(500);
     });
   });
@@ -307,9 +369,6 @@ describe("Uploads", () => {
     "newthis",
     "newthat"
   );
-  const data = fs.promises.readFile(
-    path.join(__dirname, "..", "example_reports", "tarpaulin-report.html")
-  );
 
   beforeEach(async () => {
     try {
@@ -320,6 +379,10 @@ describe("Uploads", () => {
   });
 
   describe("POST /v1/:org/:repo/:branch/:commit.html", () => {
+    const data = fs.promises.readFile(
+      path.join(__dirname, "..", "example_reports", "tarpaulin-report.html")
+    );
+
     it("should upload the report and generate a badge", async () => {
       const mockMeta = mock();
       await (await request(mockMeta))
@@ -375,7 +438,10 @@ describe("Uploads", () => {
 
     it("should return 413 when request body is not the appropriate format", async () => {
       const file = await data;
-      const bigData = Buffer.concat([file, file]);
+      let bigData = file;
+      while (bigData.length <= config.uploadLimit) {
+        bigData = Buffer.concat([bigData, file]);
+      }
       await (await request())
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
@@ -399,6 +465,99 @@ describe("Uploads", () => {
       await (await request(mock(jest.fn(), update)))
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
+        )
+        .send(await data)
+        .expect(500);
+    });
+  });
+
+  describe("POST /v1/:org/:repo/:branch/:commit.xml", () => {
+    const data = fs.promises.readFile(
+      path.join(__dirname, "..", "example_reports", "cobertura-report.xml")
+    );
+
+    it("should upload the report and generate a badge", async () => {
+      const mockMeta = mock();
+      await (await request(mockMeta))
+        .post(
+          `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=cobertura`
+        )
+        .send(await data)
+        .expect(200);
+
+      expect(mockMeta.updateBranch).toBeCalledWith({
+        organization: "testorg",
+        repository: "testrepo",
+        branch: "newthis",
+        head: "newthat"
+      });
+      expect(mockMeta.updateBranch).toHaveBeenCalledTimes(1);
+      await fs.promises.access(
+        path.join(reportPath, "index.xml"),
+        fs.constants.R_OK
+      );
+      await fs.promises.access(
+        path.join(reportPath, "badge.svg"),
+        fs.constants.R_OK
+      );
+    });
+
+    it("should return 401 when token is not correct", async () => {
+      await (await request())
+        .post(
+          `/v1/testorg/testrepo/newthis/newthat.xml?token=wrong&format=cobertura`
+        )
+        .send(await data)
+        .expect(401);
+    });
+
+    it("should return 406 with an invalid format", async () => {
+      await (await request())
+        .post(
+          `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=pepperoni`
+        )
+        .send(await data)
+        .expect(406);
+    });
+
+    it("should return 400 when request body is not the appropriate format", async () => {
+      await (await request())
+        .post(
+          `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=cobertura`
+        )
+        .send("This is not a file")
+        .expect(400);
+    });
+
+    it("should return 413 when request body is not the appropriate format", async () => {
+      const file = await data;
+      let bigData = file;
+      while (bigData.length <= config.uploadLimit) {
+        bigData = Buffer.concat([bigData, file]);
+      }
+      await (await request())
+        .post(
+          `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=cobertura`
+        )
+        .send(bigData)
+        .expect(413);
+    });
+
+    it("should return 500 when Metadata does not create branch", async () => {
+      const update = jest.fn(() => new Promise(solv => solv(false)));
+      await (await request(mock(jest.fn(), update)))
+        .post(
+          `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=cobertura`
+        )
+        .send(await data)
+        .expect(500);
+    });
+
+    it("should return 500 when promise chain is rejected", async () => {
+      const update = jest.fn(() => new Promise((_, rej) => rej("fooey 2")));
+      await (await request(mock(jest.fn(), update)))
+        .post(
+          `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=cobertura`
         )
         .send(await data)
         .expect(500);

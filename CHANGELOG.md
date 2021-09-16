@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Cobertura XML format
+
 ### Changed
 
 - Moved stage values for gradient to environment and made accessible via metadata

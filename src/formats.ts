@@ -1,11 +1,12 @@
 import { JSDOM } from "jsdom";
+import { Parser } from "xml2js";
 import { InvalidReportDocumentError } from "./errors";
 
 type CoverageResult = number | InvalidReportDocumentError;
 
 export interface Format {
   // returns the coverage value as %: Number(90.0), Number(100.0), Number(89.5)
-  parseCoverage: (contents: string) => CoverageResult;
+  parseCoverage: (contents: string) => Promise<CoverageResult>;
   matchColor: (coverage: number, style: GradientStyle) => string;
   fileName: string;
 }
@@ -46,7 +47,7 @@ export const defaultColorMatches = (
 const FormatsObj: FormatObj = {
   formats: {
     tarpaulin: {
-      parseCoverage: (contents: string): CoverageResult => {
+      parseCoverage: async (contents: string): Promise<CoverageResult> => {
         const file = new JSDOM(contents).window.document;
         const scripts = file.getElementsByTagName("script");
         if (scripts.length === 0) {
@@ -75,6 +76,29 @@ const FormatsObj: FormatObj = {
       },
       matchColor: defaultColorMatches,
       fileName: "index.html"
+    },
+    cobertura: {
+      parseCoverage: async (contents: string): Promise<CoverageResult> => {
+        try {
+          const document = await new Parser().parseStringPromise(contents);
+
+          if (document.coverage === undefined) {
+            return new InvalidReportDocumentError();
+          } else {
+            const validLines = Number(document.coverage.$["lines-valid"]);
+            const coveredLines = Number(document.coverage.$["lines-covered"]);
+            // do not error if LOC is 0
+            if (validLines === 0) {
+              return 0.0;
+            }
+            return (100 * coveredLines) / validLines;
+          }
+        } catch (err) {
+          return new InvalidReportDocumentError();
+        }
+      },
+      matchColor: defaultColorMatches,
+      fileName: "index.xml"
     }
   },
 

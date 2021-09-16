@@ -25,6 +25,7 @@
     "@types/express": "^4.17.6",
     "@types/jsdom": "^12.2.4",
     "@types/mongodb": "^3.5.16",
+    "@types/xml2js": "^0.4.9",
     "badgen": "^3.0.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
@@ -33,7 +34,8 @@
     "jsdom": "^15.2.1",
     "mongodb": "^3.5.7",
     "typescript": "^3.8.3",
-    "winston": "^3.2.1"
+    "winston": "^3.2.1",
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "@microsoft/tsdoc": "^0.12.19",

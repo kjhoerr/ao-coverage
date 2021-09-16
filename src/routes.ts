@@ -26,7 +26,7 @@ export default (metadata: Metadata): Router => {
       identity.branch,
       identity.head
     );
-    const coverage = formatter.parseCoverage(contents);
+    const coverage = await formatter.parseCoverage(contents);
     if (typeof coverage !== "number") {
       return coverage;
     }
@@ -138,6 +138,68 @@ export default (metadata: Metadata): Router => {
     });
   });
 
+  // Upload XML file
+  router.post("/v1/:org/:repo/:branch/:commit.xml", (req, res) => {
+    const { org, repo, branch, commit } = req.params;
+
+    const { token, format } = req.query;
+    if (token != metadata.getToken()) {
+      return res.status(401).send(Messages.InvalidToken);
+    }
+
+    if (typeof format !== "string" || !formats.listFormats().includes(format)) {
+      return res.status(406).send(Messages.InvalidFormat);
+    }
+
+    const limit = metadata.getUploadLimit();
+    if (Number(req.headers["content-length"] ?? 0) > limit) {
+      return res.status(413).send(Messages.FileTooLarge);
+    }
+
+    let contents = "";
+    req.on("data", raw => {
+      if (contents.length <= limit) {
+        contents += raw;
+      }
+    });
+    req.on("end", async () => {
+      // Ignore large requests
+      if (contents.length > limit) {
+        return res.status(413).send(Messages.FileTooLarge);
+      }
+
+      const formatter = formats.getFormat(format);
+      const identity = {
+        organization: org,
+        repository: repo,
+        branch,
+        head: commit
+      };
+
+      try {
+        const result = await commitFormatDocs(contents, identity, formatter);
+
+        if (typeof result === "boolean") {
+          if (result) {
+            return res.status(200).send();
+          } else {
+            logger.error(
+              "Unknown error while attempting to commit branch update"
+            );
+            return res.status(500).send(Messages.UnknownError);
+          }
+        } else {
+          return res.status(400).send(Messages.InvalidFormat);
+        }
+      } catch (err) {
+        logger.error(
+          err ?? "Unknown error occurred while processing POST request"
+        );
+        return res.status(500).send(Messages.UnknownError);
+      }
+    });
+  });
+
   const retrieveFile = (
     res: express.Response,
     identity: HeadIdentity,
@@ -188,6 +250,7 @@ export default (metadata: Metadata): Router => {
 
   router.get("/v1/:org/:repo/:branch.html", (req, res) => {
     const { org, repo, branch } = req.params;
+    const format = formats.formats.tarpaulin;
 
     metadata.getHeadCommit(org, repo, branch).then(
       result => {
@@ -198,7 +261,34 @@ export default (metadata: Metadata): Router => {
             branch,
             head: result.toString()
           };
-          retrieveFile(res, identity, "index.html");
+          retrieveFile(res, identity, format.fileName);
+        } else {
+          res.status(404).send(result.message);
+        }
+      },
+      err => {
+        logger.error(
+          err ?? "Error occurred while fetching commit for GET request"
+        );
+        res.status(500).send(Messages.UnknownError);
+      }
+    );
+  });
+
+  router.get("/v1/:org/:repo/:branch.xml", (req, res) => {
+    const { org, repo, branch } = req.params;
+    const format = formats.formats.cobertura;
+
+    metadata.getHeadCommit(org, repo, branch).then(
+      result => {
+        if (typeof result === "string") {
+          const identity = {
+            organization: org,
+            repository: repo,
+            branch,
+            head: result.toString()
+          };
+          retrieveFile(res, identity, format.fileName);
         } else {
           res.status(404).send(result.message);
         }
@@ -227,13 +317,26 @@ export default (metadata: Metadata): Router => {
   // provide hard link for commit
   router.get("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
     const { org, repo, branch, commit } = req.params;
+    const format = formats.formats.tarpaulin;
     const identity = {
       organization: org,
       repository: repo,
       branch,
       head: commit
     };
-    retrieveFile(res, identity, "index.html");
+    retrieveFile(res, identity, format.fileName);
+  });
+
+  router.get("/v1/:org/:repo/:branch/:commit.xml", (req, res) => {
+    const { org, repo, branch, commit } = req.params;
+    const format = formats.formats.cobertura;
+    const identity = {
+      organization: org,
+      repository: repo,
+      branch,
+      head: commit
+    };
+    retrieveFile(res, identity, format.fileName);
   });
 
   router.use((_, res) => {
