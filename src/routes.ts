@@ -5,7 +5,7 @@ import path from "path";
 import fs from "fs";
 
 import formats, { Format } from "./formats";
-import Metadata, { HeadIdentity } from "./metadata";
+import Metadata, { HeadIdentity, isError } from "./metadata";
 import loggerConfig from "./util/logger";
 import { InvalidReportDocumentError, Messages } from "./errors";
 
@@ -24,7 +24,7 @@ export default (metadata: Metadata): Router => {
       identity.organization,
       identity.repository,
       identity.branch,
-      identity.head
+      identity.head.commit
     );
     const coverage = await formatter.parseCoverage(contents);
     if (typeof coverage !== "number") {
@@ -76,8 +76,8 @@ export default (metadata: Metadata): Router => {
     express.static(path.join(metadata.getPublicDir(), "static"))
   );
 
-  // Upload HTML file
-  router.post("/v1/:org/:repo/:branch/:commit.html", (req, res) => {
+  // Upload file
+  router.post("/v1/:org/:repo/:branch/:commit.(ht)?x?ml", (req, res) => {
     const { org, repo, branch, commit } = req.params;
 
     const { token, format } = req.query;
@@ -111,69 +111,7 @@ export default (metadata: Metadata): Router => {
         organization: org,
         repository: repo,
         branch,
-        head: commit
-      };
-
-      try {
-        const result = await commitFormatDocs(contents, identity, formatter);
-
-        if (typeof result === "boolean") {
-          if (result) {
-            return res.status(200).send();
-          } else {
-            logger.error(
-              "Unknown error while attempting to commit branch update"
-            );
-            return res.status(500).send(Messages.UnknownError);
-          }
-        } else {
-          return res.status(400).send(Messages.InvalidFormat);
-        }
-      } catch (err) {
-        logger.error(
-          err ?? "Unknown error occurred while processing POST request"
-        );
-        return res.status(500).send(Messages.UnknownError);
-      }
-    });
-  });
-
-  // Upload XML file
-  router.post("/v1/:org/:repo/:branch/:commit.xml", (req, res) => {
-    const { org, repo, branch, commit } = req.params;
-
-    const { token, format } = req.query;
-    if (token != metadata.getToken()) {
-      return res.status(401).send(Messages.InvalidToken);
-    }
-
-    if (typeof format !== "string" || !formats.listFormats().includes(format)) {
-      return res.status(406).send(Messages.InvalidFormat);
-    }
-
-    const limit = metadata.getUploadLimit();
-    if (Number(req.headers["content-length"] ?? 0) > limit) {
-      return res.status(413).send(Messages.FileTooLarge);
-    }
-
-    let contents = "";
-    req.on("data", raw => {
-      if (contents.length <= limit) {
-        contents += raw;
-      }
-    });
-    req.on("end", async () => {
-      // Ignore large requests
-      if (contents.length > limit) {
-        return res.status(413).send(Messages.FileTooLarge);
-      }
-
-      const formatter = formats.getFormat(format);
-      const identity = {
-        organization: org,
-        repository: repo,
-        branch,
-        head: commit
+        head: { commit, format }
       };
 
       try {
@@ -212,7 +150,7 @@ export default (metadata: Metadata): Router => {
       org,
       repo,
       branch,
-      head,
+      head.commit,
       file
     );
     fs.access(pathname, fs.constants.R_OK, err =>
@@ -227,12 +165,12 @@ export default (metadata: Metadata): Router => {
 
     metadata.getHeadCommit(org, repo, branch).then(
       result => {
-        if (typeof result === "string") {
+        if (!isError(result)) {
           const identity = {
             organization: org,
             repository: repo,
             branch,
-            head: result.toString()
+            head: result
           };
           retrieveFile(res, identity, "badge.svg");
         } else {
@@ -248,47 +186,20 @@ export default (metadata: Metadata): Router => {
     );
   });
 
-  router.get("/v1/:org/:repo/:branch.html", (req, res) => {
+  router.get("/v1/:org/:repo/:branch.(ht)?x?ml", (req, res) => {
     const { org, repo, branch } = req.params;
-    const format = formats.formats.tarpaulin;
 
     metadata.getHeadCommit(org, repo, branch).then(
       result => {
-        if (typeof result === "string") {
+        if (!isError(result)) {
           const identity = {
             organization: org,
             repository: repo,
             branch,
-            head: result.toString()
+            head: result
           };
-          retrieveFile(res, identity, format.fileName);
-        } else {
-          res.status(404).send(result.message);
-        }
-      },
-      err => {
-        logger.error(
-          err ?? "Error occurred while fetching commit for GET request"
-        );
-        res.status(500).send(Messages.UnknownError);
-      }
-    );
-  });
-
-  router.get("/v1/:org/:repo/:branch.xml", (req, res) => {
-    const { org, repo, branch } = req.params;
-    const format = formats.formats.cobertura;
-
-    metadata.getHeadCommit(org, repo, branch).then(
-      result => {
-        if (typeof result === "string") {
-          const identity = {
-            organization: org,
-            repository: repo,
-            branch,
-            head: result.toString()
-          };
-          retrieveFile(res, identity, format.fileName);
+          const { fileName } = formats.getFormat(result.format);
+          retrieveFile(res, identity, fileName);
         } else {
           res.status(404).send(result.message);
         }
@@ -309,7 +220,7 @@ export default (metadata: Metadata): Router => {
       organization: org,
       repository: repo,
       branch,
-      head: commit
+      head: { commit, format: "_" }
     };
     retrieveFile(res, identity, "badge.svg");
   });
@@ -322,7 +233,7 @@ export default (metadata: Metadata): Router => {
       organization: org,
       repository: repo,
       branch,
-      head: commit
+      head: { commit, format: "tarpaulin" }
     };
     retrieveFile(res, identity, format.fileName);
   });
@@ -334,7 +245,7 @@ export default (metadata: Metadata): Router => {
       organization: org,
       repository: repo,
       branch,
-      head: commit
+      head: { commit, format: "cobertura" }
     };
     retrieveFile(res, identity, format.fileName);
   });

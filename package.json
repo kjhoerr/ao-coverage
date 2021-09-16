@@ -63,7 +63,8 @@
       "src/**/*.ts",
       "!src/**/*.test.ts",
       "!src/**/__tests__/**/*.ts",
-      "!src/index.ts"
+      "!src/index.ts",
+      "!src/metadata.ts"
     ],
     "roots": [
       "src/"

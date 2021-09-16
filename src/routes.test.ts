@@ -55,7 +55,8 @@ const config = {
 };
 const mock = (
   headCommit: jest.Mock = jest.fn(
-    () => new Promise(solv => solv("testcommit"))
+    () =>
+      new Promise(solv => solv({ commit: "testcommit", format: "tarpaulin" }))
   ),
   updateBranch: jest.Mock = jest.fn(() => new Promise(solv => solv(true)))
 ): MetadataMockType => ({
@@ -255,6 +256,25 @@ describe("Badges and reports", () => {
       expect(res.text).toEqual(buffer.toString("utf-8"));
     });
 
+    it("should retrieve the marked format as stored in metadata", async () => {
+      const head = jest.fn(
+        () =>
+          new Promise(solv =>
+            solv({ commit: "testcommit", format: "cobertura" })
+          )
+      );
+      const mockMeta = mock(head);
+      // request HTML, get XML
+      const res = await (await request(mockMeta))
+        .get("/v1/testorg/testrepo/testbranch.html")
+        .expect("Content-Type", /xml/)
+        .expect(200);
+      const buffer = await fs.promises.readFile(coberturaReport);
+
+      expect(mockMeta.getHeadCommit).toHaveBeenCalledTimes(1);
+      expect(res.text).toEqual(buffer.toString("utf-8"));
+    });
+
     it("should return 404 if file does not exist", async () => {
       await (await request()).get("/v1/neorg/nerepo/nebranch.html").expect(404);
     });
@@ -278,12 +298,37 @@ describe("Badges and reports", () => {
 
   describe("GET /v1/:org/:repo/:branch.xml", () => {
     it("should retrieve the stored report file with the associated head commit", async () => {
-      const mockMeta = mock();
+      const head = jest.fn(
+        () =>
+          new Promise(solv =>
+            solv({ commit: "testcommit", format: "cobertura" })
+          )
+      );
+      const mockMeta = mock(head);
       const res = await (await request(mockMeta))
         .get("/v1/testorg/testrepo/testbranch.xml")
         .expect("Content-Type", /xml/)
         .expect(200);
       const buffer = await fs.promises.readFile(coberturaReport);
+
+      expect(mockMeta.getHeadCommit).toHaveBeenCalledTimes(1);
+      expect(res.text).toEqual(buffer.toString("utf-8"));
+    });
+
+    it("should retrieve the marked format as stored in metadata", async () => {
+      const head = jest.fn(
+        () =>
+          new Promise(solv =>
+            solv({ commit: "testcommit", format: "tarpaulin" })
+          )
+      );
+      const mockMeta = mock(head);
+      // request XML, get HTML
+      const res = await (await request(mockMeta))
+        .get("/v1/testorg/testrepo/testbranch.xml")
+        .expect("Content-Type", /html/)
+        .expect(200);
+      const buffer = await fs.promises.readFile(tarpaulinReport);
 
       expect(mockMeta.getHeadCommit).toHaveBeenCalledTimes(1);
       expect(res.text).toEqual(buffer.toString("utf-8"));
@@ -396,7 +441,7 @@ describe("Uploads", () => {
         organization: "testorg",
         repository: "testrepo",
         branch: "newthis",
-        head: "newthat"
+        head: { commit: "newthat", format: "tarpaulin" }
       });
       expect(mockMeta.updateBranch).toHaveBeenCalledTimes(1);
       await fs.promises.access(
@@ -489,7 +534,7 @@ describe("Uploads", () => {
         organization: "testorg",
         repository: "testrepo",
         branch: "newthis",
-        head: "newthat"
+        head: { commit: "newthat", format: "cobertura" }
       });
       expect(mockMeta.updateBranch).toHaveBeenCalledTimes(1);
       await fs.promises.access(

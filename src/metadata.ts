@@ -5,8 +5,19 @@ import loggerConfig from "./util/logger";
 import { BranchNotFoundError } from "./errors";
 import { GradientStyle } from "./formats";
 
+interface HeadContext {
+  commit: string;
+  format: string;
+}
+
+export const isError = (
+  obj: HeadContext | BranchNotFoundError
+): obj is BranchNotFoundError => {
+  return Object.keys(obj).includes("name");
+};
+
 interface Branch {
-  head: string;
+  head: HeadContext | string;
 }
 
 interface BranchList {
@@ -17,7 +28,7 @@ export interface HeadIdentity {
   organization: string;
   repository: string;
   branch: string;
-  head: string;
+  head: HeadContext;
 }
 
 export interface Repository {
@@ -73,7 +84,7 @@ class Metadata {
     organization: string,
     repository: string,
     branch: string
-  ): Promise<string | BranchNotFoundError> {
+  ): Promise<HeadContext | BranchNotFoundError> {
     const result = await this.database
       .collection<Repository>("repository")
       .findOne({
@@ -84,14 +95,18 @@ class Metadata {
 
     if (result !== null && Object.keys(result.branches).includes(branch)) {
       const limb = result.branches[branch];
+      const head = typeof limb.head === "string" ? limb.head : limb.head.commit;
+      const format =
+        typeof limb.head === "string" ? "tarpaulin" : limb.head.format;
       logger.debug(
-        "Found commit %s for ORB %s/%s/%s",
-        limb.head,
+        "Found commit %s for ORB %s/%s/%s (format %s)",
+        head,
         organization,
         repository,
-        branch
+        branch,
+        format
       );
-      return limb.head;
+      return { commit: head, format };
     } else {
       return new BranchNotFoundError();
     }
