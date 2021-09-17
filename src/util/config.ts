@@ -72,7 +72,12 @@ export const handleStartup = async (
     await persistTemplate({
       inputFile: path.join(publicDir, "templates", "index.html.template"),
       outputFile: path.join(hostDir, "index.html"),
-      context: { TARGET_URL: targetUrl }
+      context: {
+        TARGET_URL: targetUrl,
+        CURL_HTTPS: targetUrl.includes("https")
+          ? "--proto '=https' --tlsv1.2 "
+          : ""
+      }
     } as Template);
 
     return mongo;
