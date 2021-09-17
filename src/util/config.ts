@@ -65,8 +65,8 @@ export const handleStartup = async (
     );
 
     await persistTemplate({
-      inputFile: path.join(publicDir, "templates", "bash.template"),
-      outputFile: path.join(hostDir, "bash"),
+      inputFile: path.join(publicDir, "templates", "sh.template"),
+      outputFile: path.join(hostDir, "sh"),
       context: { TARGET_URL: targetUrl }
     } as Template);
     await persistTemplate({
