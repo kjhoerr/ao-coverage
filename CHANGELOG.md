@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Increased script file compatibility and moved to `/sh`
+
 ## [0.5.0]
 
 ### Added

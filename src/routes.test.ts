@@ -88,21 +88,21 @@ const HOST_DIR = configOrError("HOST_DIR");
 const TARGET_URL = process.env.TARGET_URL ?? "http://localhost:3000";
 
 describe("templates", () => {
-  describe("GET /bash", () => {
-    it("should return the bash file containing the curl command", async () => {
+  describe("GET /sh", () => {
+    it("should return the sh file containing the curl command", async () => {
       await persistTemplate({
         inputFile: path.join(
           __dirname,
           "..",
           "public",
           "templates",
-          "bash.template"
+          "sh.template"
         ),
-        outputFile: path.join(HOST_DIR, "bash"),
+        outputFile: path.join(HOST_DIR, "sh"),
         context: { TARGET_URL }
       } as Template);
 
-      const res = await (await request()).get("/bash").expect(200);
+      const res = await (await request()).get("/sh").expect(200);
       expect(exit).not.toHaveBeenCalled();
       expect(res.text).toMatch("curl -X POST");
       expect(res.text).toMatch(`url="${TARGET_URL}"`);
@@ -128,7 +128,9 @@ describe("templates", () => {
         .expect("Content-Type", /html/)
         .expect(200);
       expect(exit).not.toHaveBeenCalled();
-      expect(res.text).toMatch(`bash &lt;(curl -s ${TARGET_URL}/bash)`);
+      expect(res.text).toMatch(
+        `curl --proto '=https' --tlsv1.2 -sSf ${TARGET_URL}/sh | sh`
+      );
     });
   });
 });

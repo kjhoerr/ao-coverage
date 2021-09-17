@@ -60,8 +60,8 @@ export default (metadata: Metadata): Router => {
 
   // serve script for posting coverage report
   router.use(
-    "/bash",
-    express.static(path.join(metadata.getHostDir(), "bash"), {
+    "/sh",
+    express.static(path.join(metadata.getHostDir(), "sh"), {
       setHeaders: res => res.contentType("text/plain")
     })
   );

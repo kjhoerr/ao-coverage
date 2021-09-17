@@ -24,7 +24,7 @@
         <p>If you have a coverage token, uploading a report is as easy as adding this line to your CI pipeline:</p>
         <div class="code-container-container">
           <div class="code-container">
-            <span class="shell code">bash &lt;(curl -s {{TARGET_URL}}/bash)</span>
+            <span class="shell code">curl --proto '=https' --tlsv1.2 -sSf {{TARGET_URL}}/sh | sh</span>
           </div>
         </div>
         <p>Visit <a href="https://git.submelon.dev/kjhoerr/ao-coverage/wiki/Home" target="_blank">the AO Coverage

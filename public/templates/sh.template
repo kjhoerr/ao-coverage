@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # Licensed under Parity Public License 7.0.0
 # The full version of this license can be found here:
@@ -15,13 +15,13 @@ curl_verbosity=""
 content_type="text/html"
 extension="html"
 
-function verbose_say() {
-  if [ -z "$SILENT" ] && [ "$VERBOSE" == "true" ]; then
+verbose_say() {
+  if [ -z "$SILENT" ] && [ "$VERBOSE" = "true" ]; then
     echo "$1"
   fi
 }
 
-function say() {
+say() {
   if [ -z "$SILENT" ]; then
     echo "$1"
   fi
@@ -34,7 +34,7 @@ say
 
 verbose_say "Gathering report information . . ."
 
-if [ "$CI" == "drone" ]; then
+if [ "$CI" = "drone" ]; then
   verbose_say "Drone CI discovered - using Drone report info"
   commit="$DRONE_COMMIT"
   branch="$DRONE_BRANCH"
@@ -51,15 +51,15 @@ verbose_say "Using branch: $branch"
 verbose_say "Using repo: $repo"
 verbose_say
 
-if [ "$format" == "tarpaulin" ]; then
+if [ "$format" = "tarpaulin" ]; then
   report="${REPORT_FILE:-tarpaulin-report.html}"
-elif [ "$format" == "cobertura" ]; then
+elif [ "$format" = "cobertura" ]; then
   report="${REPORT_FILE:-cobertura.xml}"
   content_type="application/xml"
   extension="xml"
 fi
 
-if [[ ! -f "$report" ]]; then
+if [ ! -f "$report" ]; then
   say "Report file could not be found."
   exit 1
 fi
@@ -75,7 +75,7 @@ response=$(curl -X POST --data-binary "@$report" \
   $curl_verbosity \
   "$url/v1/$repo/$branch/$commit.$extension?token=$token&format=$format")
 
-if [ ! -z "$response" ]; then
+if [ -n "$response" ]; then
   say "Error uploading report: $response"
   exit 1
 else
