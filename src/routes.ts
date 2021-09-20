@@ -60,7 +60,7 @@ export default (metadata: Metadata): Router => {
 
   // serve script for posting coverage report
   router.use(
-    "/sh",
+    "/:shell(bash|sh)",
     express.static(path.join(metadata.getHostDir(), "sh"), {
       setHeaders: res => res.contentType("text/plain")
     })
@@ -77,7 +77,7 @@ export default (metadata: Metadata): Router => {
   );
 
   // Upload file
-  router.post("/v1/:org/:repo/:branch/:commit.(ht)?x?ml", (req, res) => {
+  router.post("/v1/:org/:repo/:branch/:commit.:ext(html|xml)", (req, res) => {
     const { org, repo, branch, commit } = req.params;
 
     const { token, format } = req.query;
@@ -186,7 +186,7 @@ export default (metadata: Metadata): Router => {
     );
   });
 
-  router.get("/v1/:org/:repo/:branch.(ht)?x?ml", (req, res) => {
+  router.get("/v1/:org/:repo/:branch.:ext(html|xml)", (req, res) => {
     const { org, repo, branch } = req.params;
 
     metadata.getHeadCommit(org, repo, branch).then(
