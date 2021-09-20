@@ -21,7 +21,9 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 RUN if [ "$USER_GID" != "1000" ] || [ "$USER_UID" != "1000" ]; then groupmod --gid $USER_GID node && usermod --uid $USER_UID --gid $USER_GID node; fi
 
-# create /dist and assign it to a volume
-RUN mkdir -p /dist
-RUN chown $USER_UID:$USER_GID /dist
-VOLUME [ "/dist" ]
+# create host directory for reports and assign it to a volume
+ARG HOST_DIR=/dist
+RUN mkdir -p $HOST_DIR
+RUN chown $USER_UID:$USER_GID $HOST_DIR
+VOLUME [ "${HOST_DIR}" ]
+ENV HOST_DIR=${HOST_DIR}

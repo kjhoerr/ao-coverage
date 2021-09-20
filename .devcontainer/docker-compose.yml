@@ -10,14 +10,16 @@ services:
         USER_UID: 1000
         USER_GID: 1000
 
+        # Volume directory for hosted files. This directory is created in the Dockerfile with proper permissions. This is set as an env-var in the Dockerfile
+        HOST_DIR: /dist
+
+    # Place env var changes in this file (`.devcontainer/devcontainer.env`) to persist them without tracking/staging changes
+    env_file: devcontainer.env
     environment:
       # port and bind info
       PORT: 3000
       BIND_ADDRESS: localhost
       TARGET_URL: http://localhost:3000
-
-      # Volume directory for hosted files. This directory is already created and has proper permissions
-      HOST_DIR: /dist
 
       # DB info
       MONGO_URI: mongodb://db:27017
