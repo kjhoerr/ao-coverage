@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1]
+
 ### Added
 
 - `.devcontainer` folder for providing default development environment
@@ -152,6 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Code formatting using Prettier
 
 [unreleased]: https://git.submelon.dev/kjhoerr/ao-coverage/src/branch/trunk
+[0.5.1]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.5.1
 [0.5.0]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.5.0
 [0.4.4]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.4.4
 [0.4.3]: https://git.submelon.dev/kjhoerr/ao-coverage/src/tag/v0.4.3
