@@ -81,6 +81,9 @@ check_packages apt-utils \
         manpages-dev \
         init-system-helpers
 
+echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
+
 # Install yarn
 if type yarn > /dev/null 2>&1; then
     echo "Yarn already installed."

@@ -6,14 +6,32 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # [Choice] Node.js version: 16, 14, 12
-        VARIANT: 14
         # On Linux, you may need to update USER_UID and USER_GID below if not your local UID is not 1000.
         USER_UID: 1000
         USER_GID: 1000
 
+    environment:
+      # port and bind info
+      PORT: 3000
+      BIND_ADDRESS: localhost
+      TARGET_URL: http://localhost:3000
+
+      # Volume directory for hosted files. This directory is already created and has proper permissions
+      HOST_DIR: /dist
+
+      # DB info
+      MONGO_URI: mongodb://db:27017
+      MONGO_DB: ao-coverage
+
+      # App configuration
+      LOG_LEVEL: info
+      UPLOAD_LIMIT: 4194304
+      STAGE_1: 95
+      STAGE_2: 80
+
     volumes:
       - ..:/workspace:cached
+      - node-nm:/workspace/node_modules:cached
 
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
@@ -44,3 +62,4 @@ services:
 
 volumes:
   mongodb-data:
+  node-nm:

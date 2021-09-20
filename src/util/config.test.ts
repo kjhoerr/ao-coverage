@@ -2,13 +2,36 @@ const exit = jest
   .spyOn(process, "exit")
   .mockImplementation(() => undefined as never);
 
+import { Writable } from "stream";
+import winston from "winston";
+
+let output = "";
+
+jest.mock("./logger", () => {
+  const stream = new Writable();
+  stream._write = (chunk, _encoding, next) => {
+       output = output += chunk.toString();
+       next();
+  };
+  const streamTransport = new winston.transports.Stream({ stream });
+
+  return {
+    __esModule: true,
+    default: () => ({
+    format: winston.format.combine(winston.format.splat(), winston.format.simple()),
+    transports: [streamTransport]
+    })
+  }
+});
+
 import {
   configOrError,
   persistTemplate,
   handleStartup,
-  handleShutdown
+  handleShutdown,
+  initializeToken
 } from "./config";
-import { MongoClient, MongoError, ReadPreference } from "mongodb";
+import { Logger, MongoClient, MongoError, ReadConcern, ReadPreference, WriteConcern } from "mongodb";
 import { Server } from "http";
 import path from "path";
 import fs from "fs";
@@ -43,14 +66,56 @@ const MongoMock = (p: Promise<void>): jest.Mock<MongoClient, void[]> =>
   jest.fn<MongoClient, void[]>(() => ({
     ...CommonMocks,
     close: jest.fn(() => p),
-    readPreference: {
-      mode: ReadPreference.NEAREST,
-      tags: [],
-      isValid: jest.fn(),
-      slaveOk: jest.fn(),
-      equals: jest.fn()
+    readPreference: ReadPreference.nearest,
+    bsonOptions: {},
+    logger: new Logger("a"),
+    getLogger: jest.fn(),
+    options: {
+      hosts: [],
+      readPreference: ReadPreference.nearest,
+      readConcern: new ReadConcern("local"),
+      loadBalanced: true,
+      serverApi: { version: "1" },
+      compressors: [],
+      writeConcern: new WriteConcern(),
+      dbName: "",
+      metadata: {driver: {name: "", version: ""}, os: {type: "", name: "linux", architecture: "", version: ""}, platform: "linx"},
+      tls: true,
+      toURI: jest.fn(),
+      autoEncryption: {},
+      connectTimeoutMS: 0,
+      directConnection: true,
+      driverInfo: {},
+      forceServerObjectId: true,
+      minHeartbeatFrequencyMS: 0,
+      heartbeatFrequencyMS: 0,
+      keepAlive: false,
+      keepAliveInitialDelay: 0,
+      localThresholdMS: 0,
+      logger: new Logger("a"),
+      maxIdleTimeMS: 0,
+      maxPoolSize: 0,
+      minPoolSize: 0,
+      monitorCommands: true,
+      noDelay: true,
+      pkFactory: { createPk: jest.fn() },
+      promiseLibrary: {},
+      raw: true,
+      replicaSet: "",
+      retryReads: true,
+      retryWrites: true,
+      serverSelectionTimeoutMS: 0,
+      socketTimeoutMS: 0,
+      tlsAllowInvalidCertificates: true,
+      tlsAllowInvalidHostnames: true,
+      tlsInsecure: false,
+      waitQueueTimeoutMS: 0,
+      zlibCompressionLevel: 0,
     },
-    writeConcern: {},
+    serverApi: { version: "1" },
+    autoEncrypter: undefined,
+    readConcern: new ReadConcern("local"),
+    writeConcern: new WriteConcern(),
     db: jest.fn()
   }));
 const ServerMock = (mockErr: Error | undefined): jest.Mock<Server, void[]> =>
@@ -75,6 +140,20 @@ const ServerMock = (mockErr: Error | undefined): jest.Mock<Server, void[]> =>
     requestTimeout: 3600,
     unref: jest.fn()
   }));
+
+describe("initializeToken", () => {
+  it("Should generate a UUID", () => {
+    // Arrange
+    output = "";
+
+    // Act
+    let result = initializeToken();
+
+    // Assert
+    expect(result).toMatch(/([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})/);
+    expect(output).toContain(result);
+  });
+});
 
 describe("configOrError", () => {
   beforeEach(() => {

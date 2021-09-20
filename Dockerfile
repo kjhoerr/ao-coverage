@@ -5,20 +5,27 @@ WORKDIR /app
 # Stage 2. Dependencies
 FROM base AS dependencies
 COPY package*.json ./
-RUN npm install
+COPY yarn.lock ./
+COPY .yarnrc.yml ./
+COPY .yarn ./.yarn
+RUN yarn install
 
 # Stage 3. TS compilation
 FROM dependencies AS build
 COPY src /app/src
 COPY tsconfig.json /app
-RUN npm run tsc
+RUN yarn run tsc
 
 # Stage 4. Release Image
 FROM node:lts-alpine AS release
 WORKDIR /app
 
 COPY --from=dependencies /app/package.json ./
-RUN npm install --only=production
+COPY --from=dependencies /app/yarn.lock ./
+COPY --from=dependencies /app/.yarnrc.yml ./
+COPY --from=dependencies /app/.yarn/releases ./.yarn/releases
+COPY --from=dependencies /app/.yarn/cache    ./.yarn/cache
+RUN yarn install && yarn cache clean
 COPY --from=build /app/build ./build
 COPY public ./public
 

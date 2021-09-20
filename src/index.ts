@@ -9,7 +9,12 @@ dotenv.config();
 import routes from "./routes";
 import Metadata, { EnvConfig } from "./metadata";
 import loggerConfig from "./util/logger";
-import { configOrError, handleStartup, handleShutdown } from "./util/config";
+import {
+  configOrError,
+  handleStartup,
+  handleShutdown,
+  initializeToken
+} from "./util/config";
 
 // Start-up configuration
 const BIND_ADDRESS = process.env.BIND_ADDRESS ?? "localhost";
@@ -18,7 +23,7 @@ const PORT = Number(process.env.PORT ?? 3000);
 const MONGO_URI = configOrError("MONGO_URI");
 const TARGET_URL = process.env.TARGET_URL ?? "http://localhost:3000";
 const ENV_CONFIG: EnvConfig = {
-  token: process.env.TOKEN ?? "",
+  token: process.env.TOKEN ?? initializeToken(),
   uploadLimit: Number(process.env.UPLOAD_LIMIT ?? 4194304),
   publicDir: path.join(__dirname, "..", "public"),
   hostDir: configOrError("HOST_DIR"),

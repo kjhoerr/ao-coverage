@@ -136,11 +136,11 @@ class Metadata {
       branches: { [branch]: { head } }
     };
 
-    const { result } = await this.database
+    const result = await this.database
       .collection<Repository>("repository")
       .insertOne(repo);
 
-    return result.ok === 1;
+    return result.acknowledged;
   }
 }
 

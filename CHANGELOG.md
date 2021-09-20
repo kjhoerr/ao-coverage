@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `.devcontainer` folder for providing default development environment
+- If token is not provided by `dotenv`, create token with `uuid` and post it to logs
+
 ### Changed
 
 - Increased script file compatibility and moved to `/sh`
+- Use yarn and Zero Install
 
 ## [0.5.0]
 

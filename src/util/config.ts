@@ -3,12 +3,28 @@ import { MongoClient, MongoError } from "mongodb";
 import { Server } from "http";
 import path from "path";
 import fs from "fs";
+import { v4 as uuid } from "uuid";
 
 import loggerConfig from "./logger";
 import processTemplate, { Template } from "../templates";
 import { EnvConfig } from "../metadata";
 
 const logger = winston.createLogger(loggerConfig("ROOT"));
+
+export const initializeToken = (): string => {
+  //TODO check for token in hostDir/persist created token in hostDir so it's not regenerated on startup
+  const newToken = uuid();
+
+  logger.warn(
+    "TOKEN variable not provided, using this value instead: %s",
+    newToken
+  );
+  logger.warn(
+    "Use this provided token to push your coverage reports to the server."
+  );
+
+  return newToken;
+};
 
 export const configOrError = (varName: string): string => {
   const value = process.env[varName];
@@ -58,9 +74,7 @@ export const handleStartup = async (
       await Promise.reject("hostDir must be an absolute path");
     }
 
-    const mongo = await MongoClient.connect(mongoUri, {
-      useUnifiedTopology: true
-    }).catch((err: MongoError) =>
+    const mongo = await MongoClient.connect(mongoUri).catch((err: MongoError) =>
       Promise.reject(err.message ?? "Unable to connect to database")
     );
 

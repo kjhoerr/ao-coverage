@@ -85,7 +85,7 @@ const request = async (
 };
 
 const HOST_DIR = configOrError("HOST_DIR");
-const TARGET_URL = process.env.TARGET_URL ?? "http://localhost:3000";
+const TARGET_URL = "https://localhost:3000";
 
 describe("templates", () => {
   describe("GET /sh", () => {
@@ -120,7 +120,7 @@ describe("templates", () => {
           "index.html.template"
         ),
         outputFile: path.join(HOST_DIR, "index.html"),
-        context: { TARGET_URL }
+        context: { TARGET_URL, CURL_HTTPS: "--https " }
       } as Template);
 
       const res = await (await request())
@@ -129,7 +129,7 @@ describe("templates", () => {
         .expect(200);
       expect(exit).not.toHaveBeenCalled();
       expect(res.text).toMatch(
-        `curl --proto '=https' --tlsv1.2 -sSf ${TARGET_URL}/sh | sh`
+        `curl --https -sSf ${TARGET_URL}/sh | sh`
       );
     });
   });
