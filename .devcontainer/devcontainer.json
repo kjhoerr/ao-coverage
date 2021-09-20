@@ -1,9 +1,9 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.194.0/containers/javascript-node-mongo
 {
-	"name": "Ubuntu, Node.js & Mongo DB",
+	"name": "AO Coverage",
 	"dockerComposeFile": "docker-compose.yml",
-	"service": "app",
+	"service": "aocov",
 	"workspaceFolder": "/workspace",
 
 	// Set *default* container specific settings.json values on container create.
@@ -15,6 +15,6 @@
 		"esbenp.prettier-vscode"
 	],
 	"forwardPorts": [3000, 27017],
-	"postCreateCommand": "sudo locale-gen 'en_US.UTF-8'; sudo chown node:node node_modules; yarn install",
+	"postCreateCommand": "sudo chown node:node node_modules; yarn install",
 	"remoteUser": "node"
 }

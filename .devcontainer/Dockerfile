@@ -4,9 +4,10 @@ FROM ubuntu:bionic
 # Install needed packages, yarn, nvm and setup non-root user
 RUN groupadd --gid 1000 node \
   && useradd --uid 1000 --gid node --shell /bin/bash --create-home node
+ARG INSTALL_ZSH=false
 COPY node.sh ./
 RUN chmod +x ./node.sh
-RUN ./node.sh
+RUN ./node.sh $INSTALL_ZSH
 
 # Install MongoDB command line tools
 ARG MONGO_TOOLS_VERSION=4.2

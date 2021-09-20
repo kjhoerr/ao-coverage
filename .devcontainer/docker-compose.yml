@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  app:
+  aocov:
     build: 
       context: .
       dockerfile: Dockerfile
@@ -9,6 +9,9 @@ services:
         # On Linux, you may need to update USER_UID and USER_GID below if not your local UID is not 1000.
         USER_UID: 1000
         USER_GID: 1000
+
+        # Change this if you want zsh as your shell
+        INSTALL_ZSH: false
 
         # Volume directory for hosted files. This directory is created in the Dockerfile with proper permissions. This is set as an env-var in the Dockerfile
         HOST_DIR: /dist
@@ -20,7 +23,7 @@ services:
       TARGET_URL: http://localhost:3000
 
       # DB info
-      MONGO_URI: mongodb://db:27017
+      MONGO_URI: mongodb://aocov-db:27017
       MONGO_DB: ao-coverage
 
       # App configuration
@@ -37,7 +40,7 @@ services:
     command: sleep infinity
 
     # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
-    network_mode: service:db
+    network_mode: service:aocov-db
 
     # Uncomment the next line to use a non-root user for all processes.
     user: node
@@ -45,7 +48,7 @@ services:
     # Use "forwardPorts" in **devcontainer.json** to forward an app port locally. 
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
-  db:
+  aocov-db:
     image: mongo:latest
     restart: unless-stopped
     volumes:
