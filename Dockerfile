@@ -20,12 +20,15 @@ RUN yarn run tsc
 FROM node:lts-alpine AS release
 WORKDIR /app
 
-COPY --from=dependencies /app/package.json ./
-COPY --from=dependencies /app/yarn.lock ./
-COPY --from=dependencies /app/.yarnrc.yml ./
+COPY --from=dependencies /app/package.json   ./
+COPY --from=dependencies /app/yarn.lock      ./
+COPY --from=dependencies /app/.yarnrc.yml    ./
 COPY --from=dependencies /app/.yarn/releases ./.yarn/releases
 COPY --from=dependencies /app/.yarn/cache    ./.yarn/cache
-RUN yarn install && yarn cache clean
+COPY --from=dependencies /app/.yarn/plugins  ./.yarn/plugins
+RUN yarn install \
+ && yarn workspaces focus -A --production \
+ && yarn cache clean
 COPY --from=build /app/build ./build
 COPY public ./public
 
