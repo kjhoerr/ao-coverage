@@ -5,7 +5,6 @@ coverage
 docs
 .vscode
 tsconfig.tsbuildinfo
-.devcontainer/devcontainer.env
 .env*
 !.env.sample
 .yarn/*
