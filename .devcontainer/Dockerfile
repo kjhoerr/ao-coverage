@@ -28,3 +28,6 @@ RUN mkdir -p $HOST_DIR
 RUN chown $USER_UID:$USER_GID $HOST_DIR
 VOLUME [ "${HOST_DIR}" ]
 ENV HOST_DIR=${HOST_DIR}
+
+# Copy in starter data
+COPY data $HOST_DIR

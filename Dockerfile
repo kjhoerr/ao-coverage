@@ -34,7 +34,7 @@ COPY --from=build /app/build ./build
 COPY public ./public
 
 ENV NODE_ENV=production \
-    PORT=8080 \
+    PORT=80 \
     BIND_ADDRESS=0.0.0.0 \
     UPLOAD_LIMIT=134217700 \
     LOG_LEVEL=info \

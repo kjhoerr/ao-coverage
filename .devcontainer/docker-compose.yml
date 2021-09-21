@@ -10,10 +10,10 @@ services:
         USER_UID: 1000
         USER_GID: 1000
 
-        # Change this if you want zsh as your shell
         INSTALL_ZSH: false
+        MONGO_TOOLS_VERSION: 4.2
 
-        # Volume directory for hosted files. This directory is created in the Dockerfile with proper permissions. This is set as an env-var in the Dockerfile
+        # Volume directory for hosted files. This directory is created on image build with proper permissions. This is set as an env-var in the Dockerfile
         HOST_DIR: /dist
 
     environment:
@@ -35,6 +35,7 @@ services:
     volumes:
       - ..:/workspace:cached
       - node-nm:/workspace/node_modules:cached
+      - dev-dist:/dist:cached
 
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
@@ -53,12 +54,10 @@ services:
     restart: unless-stopped
     volumes:
       - mongodb-data:/data/db
+      - ./mongo:/docker-entrypoint-initdb.d
 
-    # Uncomment to change startup options
-    # environment:
-    #  MONGO_INITDB_ROOT_USERNAME: root
-    #  MONGO_INITDB_ROOT_PASSWORD: example
-    #  MONGO_INITDB_DATABASE: your-database-here
+    environment:
+      MONGO_INITDB_DATABASE: ao-coverage
 
     # Add "forwardPorts": ["27017"] to **devcontainer.json** to forward MongoDB locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
@@ -66,3 +65,4 @@ services:
 volumes:
   mongodb-data:
   node-nm:
+  dev-dist:
