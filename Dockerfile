@@ -26,8 +26,8 @@ COPY --from=dependencies /app/.yarnrc.yml    ./
 COPY --from=dependencies /app/.yarn/releases ./.yarn/releases
 COPY --from=dependencies /app/.yarn/cache    ./.yarn/cache
 COPY --from=dependencies /app/.yarn/plugins  ./.yarn/plugins
-RUN yarn install \
- && yarn workspaces focus -A --production \
+COPY --from=dependencies /app/node_modules   ./node_modules
+RUN yarn workspaces focus -A --production \
  && yarn cache clean \
  && rm -r yarn.lock .yarn
 COPY --from=build /app/build ./build
