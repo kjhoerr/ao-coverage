@@ -14,8 +14,8 @@
     "format": "prettier --write 'src/**/*.ts'",
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint --fix 'src/**/*.ts'",
-    "test": "jest -i",
-    "test:coverage": "jest -i --coverage --coverageReporters cobertura",
+    "test": "jest",
+    "test:coverage": "jest --coverage --coverageReporters cobertura",
     "tsc": "tsc",
     "doc": "typedoc src"
   },
