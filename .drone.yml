@@ -9,6 +9,7 @@ steps:
     FORMAT: cobertura
     REPORT_FILE: coverage/cobertura-coverage.xml
     HOST_DIR: /dist
+    VERBOSE: true
   commands:
   - mkdir -p $HOST_DIR && chown $USER:$USER $HOST_DIR
   - yarn install --immutable --immutable-cache --check-cache
