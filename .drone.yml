@@ -5,8 +5,12 @@ name: default
 steps:
 - name: AO Coverage Verify
   image: node:lts
+  environment:
+  - FORMAT: cobertura
+  - REPORT_FILE: coverage/cobertura-coverage.xml
+  - HOST_DIR: /dist
   commands:
-  - mkdir -p /dist && chown $USER:$USER /dist && cp .env.sample .env
+  - mkdir -p $HOST_DIR && chown $USER:$USER $HOST_DIR
   - yarn install --immutable --immutable-cache --check-cache
   - yarn run test:coverage
   - curl --proto '=https' --tlsv1.2 -sSf https://cov.submelon.dev/sh | sh
