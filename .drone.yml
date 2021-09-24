@@ -10,6 +10,8 @@ steps:
     REPORT_FILE: coverage/cobertura-coverage.xml
     HOST_DIR: /dist
     VERBOSE: true
+    COV_TOKEN:
+      from_secret: token
   commands:
   - mkdir -p $HOST_DIR && chown $USER:$USER $HOST_DIR
   - yarn install --immutable --immutable-cache --check-cache
