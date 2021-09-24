@@ -6,9 +6,9 @@ steps:
 - name: AO Coverage Verify
   image: node:lts
   environment:
-  - FORMAT: cobertura
-  - REPORT_FILE: coverage/cobertura-coverage.xml
-  - HOST_DIR: /dist
+    FORMAT: cobertura
+    REPORT_FILE: coverage/cobertura-coverage.xml
+    HOST_DIR: /dist
   commands:
   - mkdir -p $HOST_DIR && chown $USER:$USER $HOST_DIR
   - yarn install --immutable --immutable-cache --check-cache
