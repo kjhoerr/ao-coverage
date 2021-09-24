@@ -34,7 +34,7 @@ say
 
 verbose_say "Gathering report information . . ."
 
-if [ "$CI" = "drone" ]; then
+if [ "$CI" = "true" ] && [ "$DRONE" = "true" ] ; then
   verbose_say "Drone CI discovered - using Drone report info"
   commit="$DRONE_COMMIT"
   branch="$DRONE_BRANCH"
