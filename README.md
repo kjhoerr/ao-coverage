@@ -1,4 +1,6 @@
 # ao-coverage
+[![Build Status](https://drone.bleu.fish/api/badges/kjhoerr/ao-coverage/status.svg?ref=refs/heads/trunk)](https://drone.bleu.fish/kjhoerr/ao-coverage)
+[![Coverage Status](https://cov.submelon.dev/v1/kjhoerr/ao-coverage/trunk.svg)](https://cov.submelon.dev/v1/kjhoerr/ao-coverage/trunk.xml)
 
 A simple coverage handler and server. The basic function provides an SVG badge with the coverage percentage and a link to the uploaded HTML coverage report. Only basic metadata is required to persist to track the latest commits for the linked branches.
 
