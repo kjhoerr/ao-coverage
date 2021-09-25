@@ -9,7 +9,7 @@ steps:
     FORMAT: cobertura
     REPORT_FILE: coverage/cobertura-coverage.xml
     HOST_DIR: /dist
-    VERBOSE: true
+    VERBOSE: "true"
     COV_TOKEN:
       from_secret: token
   commands:
@@ -18,6 +18,18 @@ steps:
   - yarn run lint
   - yarn run test:coverage
   - curl --proto '=https' --tlsv1.2 -sSf https://cov.submelon.dev/sh | sh
+- name: publish
+  image: plugins/docker
+  settings:
+    repo: $DRONE_REPO
+    tags:
+      - $DRONE_COMMIT_SHA
+      - latest
+    target: release
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
 
 trigger:
   branch:
