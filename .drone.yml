@@ -21,9 +21,9 @@ steps:
 - name: publish
   image: plugins/docker
   settings:
-    repo: $DRONE_REPO
+    repo: "${DRONE_REPO}"
     tags:
-      - $DRONE_COMMIT_SHA
+      - "${DRONE_COMMIT_SHA}"
       - latest
     target: release
     username:
