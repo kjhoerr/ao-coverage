@@ -59,8 +59,10 @@ steps:
     KUBE_TOKEN:
       from_secret: kube_token
   settings:
-    kubernetes_server: "${KUBE_SERVER}"
-    kubernetes_token: "${KUBE_TOKEN}"
+    kubernetes_server:
+      from_secret: kube_server
+    kubernetes_token:
+      from_secret: kube_token
     namespace: default
     deployment: gitcov-deployment
     repo: "${DRONE_REPO}"
