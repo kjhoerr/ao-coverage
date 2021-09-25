@@ -34,7 +34,6 @@ services:
 
     volumes:
       - ..:/workspace:cached
-      - node-nm:/workspace/node_modules:cached
       - dev-dist:/dist:cached
 
     # Overrides default command so things don't shut down after the process ends.

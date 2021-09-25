@@ -15,6 +15,6 @@
 		"esbenp.prettier-vscode"
 	],
 	"forwardPorts": [3000, 27017],
-	"postCreateCommand": "sudo chown node:node node_modules; yarn install",
+	"postCreateCommand": "yarn install",
 	"remoteUser": "node"
 }

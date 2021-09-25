@@ -146,6 +146,7 @@ const ServerMock = (mockErr: Error | undefined): jest.Mock<Server, void[]> =>
     },
     maxHeadersCount: 0,
     maxConnections: 0,
+    maxRequestsPerSocket: 0,
     listen: jest.fn(),
     listening: true,
     address: jest.fn(),

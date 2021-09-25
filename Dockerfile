@@ -23,13 +23,11 @@ WORKDIR /app
 COPY --from=dependencies /app/package.json   ./
 COPY --from=dependencies /app/yarn.lock      ./
 COPY --from=dependencies /app/.yarnrc.yml    ./
-COPY --from=dependencies /app/.yarn/releases ./.yarn/releases
 COPY --from=dependencies /app/.yarn/cache    ./.yarn/cache
 COPY --from=dependencies /app/.yarn/plugins  ./.yarn/plugins
+COPY --from=dependencies /app/.yarn/releases ./.yarn/releases
 RUN yarn install \
- && yarn workspaces focus -A --production \
- && yarn cache clean \
- && rm -r yarn.lock .yarn
+ && yarn workspaces focus -A --production
 COPY --from=build /app/build ./build
 COPY public ./public
 
@@ -44,4 +42,4 @@ RUN mkdir -p ${HOST_DIR}
 VOLUME [ "${HOST_DIR}" ]
 EXPOSE ${PORT}
 
-CMD [ "node", "./build/index.js" ]
+CMD [ "yarn", "node", "./build/index.js" ]

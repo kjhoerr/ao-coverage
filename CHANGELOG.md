@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Lint check during pipeline
+
+### Changed
+
+- Moved to using Plug'n'Play over node_modules
+
 ## [0.5.3]
 
 ### Added

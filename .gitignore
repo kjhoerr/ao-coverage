@@ -3,7 +3,6 @@ dist
 build
 coverage
 docs
-.vscode
 tsconfig.tsbuildinfo
 .env*
 !.env.sample
