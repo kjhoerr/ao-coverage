@@ -34,6 +34,7 @@ steps:
     event:
       exclude:
       - tag
+      - pull_request
 - name: publish (with tag)
   image: plugins/docker
   settings:
@@ -51,13 +52,10 @@ steps:
     event:
       include:
       - tag
+      exclude:
+      - pull_request
 - name: deploy
   image: quay.io/honestbee/drone-kubernetes 
-  environment:
-    KUBE_SERVER:
-      from_secret: kube_server
-    KUBE_TOKEN:
-      from_secret: kube_token
   settings:
     kubernetes_server:
       from_secret: kube_server
@@ -68,6 +66,10 @@ steps:
     repo: "${DRONE_REPO}"
     container: gitcov-container
     tag: "${DRONE_COMMIT_SHA}"
+  when:
+    event:
+      exclude:
+      - pull_request
 
 trigger:
   branch:
