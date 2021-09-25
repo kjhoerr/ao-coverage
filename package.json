@@ -15,7 +15,7 @@
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint --fix 'src/**/*.ts'",
     "test": "jest",
-    "test:coverage": "jest --coverage --coverageReporters cobertura",
+    "test:coverage": "jest --coverage",
     "tsc": "tsc",
     "doc": "typedoc src"
   },
@@ -80,6 +80,10 @@
         "lines": 85,
         "statements": 85
       }
-    }
+    },
+    "coverageReporters": [
+      "cobertura",
+      "text"
+    ]
   }
 }

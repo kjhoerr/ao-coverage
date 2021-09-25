@@ -23,6 +23,28 @@ test("HOST_DIR must be readable and writable", () => {
   ).not.toThrowError();
 });
 
+import { Writable } from "stream";
+import winston from "winston";
+
+let output = "";
+
+jest.mock("./util/logger", () => {
+  const stream = new Writable();
+  stream._write = (chunk, _encoding, next) => {
+       output = output += chunk.toString();
+       next();
+  };
+  const streamTransport = new winston.transports.Stream({ stream });
+
+  return {
+    __esModule: true,
+    default: () => ({
+    format: winston.format.combine(winston.format.splat(), winston.format.simple()),
+    transports: [streamTransport]
+    })
+  }
+});
+
 import { configOrError, persistTemplate } from "./util/config";
 import routes from "./routes";
 import Metadata, { EnvConfig } from "./metadata";
