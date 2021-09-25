@@ -76,7 +76,7 @@ class Metadata {
   getGradientStyle(): GradientStyle {
     return {
       stage1: this.config.stage1,
-      stage2: this.config.stage2
+      stage2: this.config.stage2,
     };
   }
 
@@ -90,7 +90,7 @@ class Metadata {
       .findOne({
         organization,
         name: repository,
-        ["branches." + branch]: { $exists: true, $ne: null }
+        ["branches." + branch]: { $exists: true, $ne: null },
       });
 
     if (result !== null && Object.keys(result.branches).includes(branch)) {
@@ -133,7 +133,7 @@ class Metadata {
     const repo: Repository = {
       organization,
       name,
-      branches: { [branch]: { head } }
+      branches: { [branch]: { head } },
     };
 
     const result = await this.database

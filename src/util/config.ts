@@ -81,7 +81,7 @@ export const handleStartup = async (
     await persistTemplate({
       inputFile: path.join(publicDir, "templates", "sh.template"),
       outputFile: path.join(hostDir, "sh"),
-      context: { TARGET_URL: targetUrl }
+      context: { TARGET_URL: targetUrl },
     } as Template);
     await persistTemplate({
       inputFile: path.join(publicDir, "templates", "index.html.template"),
@@ -90,8 +90,8 @@ export const handleStartup = async (
         TARGET_URL: targetUrl,
         CURL_HTTPS: targetUrl.includes("https")
           ? "--proto '=https' --tlsv1.2 "
-          : ""
-      }
+          : "",
+      },
     } as Template);
 
     return mongo;
@@ -101,22 +101,22 @@ export const handleStartup = async (
   }
 };
 
-export const handleShutdown = (mongo: MongoClient, server: Server) => (
-  signal: NodeJS.Signals
-): Promise<void> => {
-  logger.warn("%s signal received. Closing shop.", signal);
+export const handleShutdown =
+  (mongo: MongoClient, server: Server) =>
+  (signal: NodeJS.Signals): Promise<void> => {
+    logger.warn("%s signal received. Closing shop.", signal);
 
-  return mongo
-    .close()
-    .then(() => {
-      logger.info("MongoDB client connection closed.");
-      return new Promise((res, rej) =>
-        server.close(err => {
-          logger.info("Express down.");
-          (err ? rej : res)(err);
-        })
-      );
-    })
-    .then(() => process.exit(0))
-    .catch(() => process.exit(1));
-};
+    return mongo
+      .close()
+      .then(() => {
+        logger.info("MongoDB client connection closed.");
+        return new Promise((res, rej) =>
+          server.close((err) => {
+            logger.info("Express down.");
+            (err ? rej : res)(err);
+          })
+        );
+      })
+      .then(() => process.exit(0))
+      .catch(() => process.exit(1));
+  };

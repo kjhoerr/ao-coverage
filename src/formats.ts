@@ -75,7 +75,7 @@ const FormatsObj: FormatObj = {
         return (100 * covered) / coverable;
       },
       matchColor: defaultColorMatches,
-      fileName: "index.html"
+      fileName: "index.html",
     },
     cobertura: {
       parseCoverage: async (contents: string): Promise<CoverageResult> => {
@@ -98,17 +98,17 @@ const FormatsObj: FormatObj = {
         }
       },
       matchColor: defaultColorMatches,
-      fileName: "index.xml"
-    }
+      fileName: "index.xml",
+    },
   },
 
-  listFormats: function() {
+  listFormats: function () {
     return Object.keys(this.formats);
   },
 
-  getFormat: function(format: string) {
+  getFormat: function (format: string) {
     return this.formats[format];
-  }
+  },
 };
 
 export default FormatsObj;

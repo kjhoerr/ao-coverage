@@ -10,18 +10,21 @@ let output = "";
 jest.mock("./logger", () => {
   const stream = new Writable();
   stream._write = (chunk, _encoding, next) => {
-       output = output += chunk.toString();
-       next();
+    output = output += chunk.toString();
+    next();
   };
   const streamTransport = new winston.transports.Stream({ stream });
 
   return {
     __esModule: true,
     default: () => ({
-    format: winston.format.combine(winston.format.splat(), winston.format.simple()),
-    transports: [streamTransport]
-    })
-  }
+      format: winston.format.combine(
+        winston.format.splat(),
+        winston.format.simple()
+      ),
+      transports: [streamTransport],
+    }),
+  };
 });
 
 import {
@@ -29,9 +32,16 @@ import {
   persistTemplate,
   handleStartup,
   handleShutdown,
-  initializeToken
+  initializeToken,
 } from "./config";
-import { Logger, MongoClient, MongoError, ReadConcern, ReadPreference, WriteConcern } from "mongodb";
+import {
+  Logger,
+  MongoClient,
+  MongoError,
+  ReadConcern,
+  ReadPreference,
+  WriteConcern,
+} from "mongodb";
 import { Server } from "http";
 import path from "path";
 import fs from "fs";
@@ -59,7 +69,7 @@ const CommonMocks = {
   listenerCount: jest.fn(),
   rawListeners: jest.fn(),
   emit: jest.fn(),
-  eventNames: jest.fn()
+  eventNames: jest.fn(),
 };
 
 const MongoMock = (p: Promise<void>): jest.Mock<MongoClient, void[]> =>
@@ -79,7 +89,11 @@ const MongoMock = (p: Promise<void>): jest.Mock<MongoClient, void[]> =>
       compressors: [],
       writeConcern: new WriteConcern(),
       dbName: "",
-      metadata: {driver: {name: "", version: ""}, os: {type: "", name: "linux", architecture: "", version: ""}, platform: "linx"},
+      metadata: {
+        driver: { name: "", version: "" },
+        os: { type: "", name: "linux", architecture: "", version: "" },
+        platform: "linx",
+      },
       tls: true,
       toURI: jest.fn(),
       autoEncryption: {},
@@ -116,7 +130,7 @@ const MongoMock = (p: Promise<void>): jest.Mock<MongoClient, void[]> =>
     autoEncrypter: undefined,
     readConcern: new ReadConcern("local"),
     writeConcern: new WriteConcern(),
-    db: jest.fn()
+    db: jest.fn(),
   }));
 const ServerMock = (mockErr: Error | undefined): jest.Mock<Server, void[]> =>
   jest.fn<Server, void[]>(() => ({
@@ -126,7 +140,7 @@ const ServerMock = (mockErr: Error | undefined): jest.Mock<Server, void[]> =>
     timeout: 0,
     headersTimeout: 0,
     keepAliveTimeout: 0,
-    close: function(c: (err?: Error | undefined) => void): Server {
+    close: function (c: (err?: Error | undefined) => void): Server {
       c(mockErr);
       return this;
     },
@@ -138,7 +152,7 @@ const ServerMock = (mockErr: Error | undefined): jest.Mock<Server, void[]> =>
     getConnections: jest.fn(),
     ref: jest.fn(),
     requestTimeout: 3600,
-    unref: jest.fn()
+    unref: jest.fn(),
   }));
 
 describe("initializeToken", () => {
@@ -147,7 +161,7 @@ describe("initializeToken", () => {
     output = "";
 
     // Act
-    let result = initializeToken();
+    const result = initializeToken();
 
     // Assert
     expect(result).toMatch(/([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})/);
@@ -198,12 +212,12 @@ describe("persistTemplate", () => {
     const template = {
       inputFile: "/mnt/c/Windows/System32",
       outputFile: "./helloworld.txt",
-      context: { EXAMPLE: "this" }
+      context: { EXAMPLE: "this" },
     } as templates.Template;
     const processTemplate = jest
       .spyOn(templates, "default")
       .mockImplementation(
-        (template: templates.Template) => new Promise(res => res(template))
+        (template: templates.Template) => new Promise((res) => res(template))
       );
     const fsAccess = jest.spyOn(fs.promises, "access").mockResolvedValue();
 
@@ -220,7 +234,7 @@ describe("persistTemplate", () => {
     const template = {
       inputFile: "/mnt/c/Windows/System32",
       outputFile: "./helloworld.txt",
-      context: { EXAMPLE: "this" }
+      context: { EXAMPLE: "this" },
     } as templates.Template;
     const processTemplate = jest
       .spyOn(templates, "default")
@@ -243,7 +257,7 @@ describe("persistTemplate", () => {
     const template = {
       inputFile: "/mnt/c/Windows/System32",
       outputFile: "./helloworld.txt",
-      context: { EXAMPLE: "this" }
+      context: { EXAMPLE: "this" },
     } as templates.Template;
     const processTemplate = jest
       .spyOn(templates, "default")
@@ -270,7 +284,7 @@ describe("handleStartup", () => {
 
   const config = {
     hostDir: "/apple",
-    publicDir: "/public"
+    publicDir: "/public",
   } as EnvConfig;
   const confStartup = (): Promise<MongoClient> =>
     handleStartup("", config, "localhost");
@@ -280,13 +294,15 @@ describe("handleStartup", () => {
     const fsAccess = jest.spyOn(fs.promises, "access").mockResolvedValue();
     const pathAbsolute = jest.spyOn(path, "isAbsolute").mockReturnValue(true);
     const pathJoin = jest.spyOn(path, "join").mockReturnValue("path");
-    const mongoClient = jest.spyOn(MongoClient, "connect").mockImplementation(
-      () => new Promise<MongoClient>(res => res(superClient))
-    );
+    const mongoClient = jest
+      .spyOn(MongoClient, "connect")
+      .mockImplementation(
+        () => new Promise<MongoClient>((res) => res(superClient))
+      );
     const processTemplate = jest
       .spyOn(templates, "default")
       .mockImplementation(
-        (template: templates.Template) => new Promise(res => res(template))
+        (template: templates.Template) => new Promise((res) => res(template))
       );
 
     const result = await confStartup();
@@ -309,13 +325,15 @@ describe("handleStartup", () => {
     const fsAccess = jest.spyOn(fs.promises, "access").mockRejectedValue("boo");
     const pathAbsolute = jest.spyOn(path, "isAbsolute").mockReturnValue(true);
     const pathJoin = jest.spyOn(path, "join").mockReturnValue("path");
-    const mongoClient = jest.spyOn(MongoClient, "connect").mockImplementation(
-      () => new Promise<MongoClient>(res => res(superClient))
-    );
+    const mongoClient = jest
+      .spyOn(MongoClient, "connect")
+      .mockImplementation(
+        () => new Promise<MongoClient>((res) => res(superClient))
+      );
     const processTemplate = jest
       .spyOn(templates, "default")
       .mockImplementation(
-        (template: templates.Template) => new Promise(res => res(template))
+        (template: templates.Template) => new Promise((res) => res(template))
       );
 
     const result = await confStartup();
@@ -338,13 +356,15 @@ describe("handleStartup", () => {
     const fsAccess = jest.spyOn(fs.promises, "access").mockResolvedValue();
     const pathAbsolute = jest.spyOn(path, "isAbsolute").mockReturnValue(false);
     const pathJoin = jest.spyOn(path, "join").mockReturnValue("path");
-    const mongoClient = jest.spyOn(MongoClient, "connect").mockImplementation(
-      () => new Promise<MongoClient>(res => res(superClient))
-    );
+    const mongoClient = jest
+      .spyOn(MongoClient, "connect")
+      .mockImplementation(
+        () => new Promise<MongoClient>((res) => res(superClient))
+      );
     const processTemplate = jest
       .spyOn(templates, "default")
       .mockImplementation(
-        (template: templates.Template) => new Promise(res => res(template))
+        (template: templates.Template) => new Promise((res) => res(template))
       );
 
     const result = await confStartup();
@@ -374,7 +394,7 @@ describe("handleStartup", () => {
     const processTemplate = jest
       .spyOn(templates, "default")
       .mockImplementation(
-        (template: templates.Template) => new Promise(res => res(template))
+        (template: templates.Template) => new Promise((res) => res(template))
       );
 
     const result = await confStartup();
@@ -401,7 +421,7 @@ describe("handleShutdown", () => {
 
   it("should exit gracefully without error", async () => {
     // Arrange
-    const mongo = MongoMock(new Promise(r => r()))();
+    const mongo = MongoMock(new Promise((r) => r()))();
     const server = ServerMock(undefined)();
 
     // Act
@@ -433,7 +453,7 @@ describe("handleShutdown", () => {
 
   it("should exit with error with Server error", async () => {
     // Arrange
-    const mongo = MongoMock(new Promise(r => r()))();
+    const mongo = MongoMock(new Promise((r) => r()))();
     const server = ServerMock(Error("oh noooo"))();
 
     // Act

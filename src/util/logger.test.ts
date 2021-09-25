@@ -8,7 +8,7 @@ describe("Logger configurer", () => {
     const clazz = "important-clazz-name";
     const adapter = {
       level: "info",
-      message: "test/10"
+      message: "test/10",
     };
 
     // Act
@@ -30,7 +30,7 @@ describe("Logger configurer", () => {
     const adapter = {
       level: "info",
       message: "%s/10",
-      [SPLAT]: ["test"]
+      [SPLAT]: ["test"],
     };
 
     // Act
@@ -56,6 +56,6 @@ describe("Logger configurer", () => {
     // Assert
     expect(result.transports).toBeInstanceOf(Array);
     expect(result.transports.length).toEqual(1);
-    result.transports.forEach(t => expect(t).toBeInstanceOf(Transport));
+    result.transports.forEach((t) => expect(t).toBeInstanceOf(Transport));
   });
 });

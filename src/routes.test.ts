@@ -31,18 +31,21 @@ let output = "";
 jest.mock("./util/logger", () => {
   const stream = new Writable();
   stream._write = (chunk, _encoding, next) => {
-       output = output += chunk.toString();
-       next();
+    output = output += chunk.toString();
+    next();
   };
   const streamTransport = new winston.transports.Stream({ stream });
 
   return {
     __esModule: true,
     default: () => ({
-    format: winston.format.combine(winston.format.splat(), winston.format.simple()),
-    transports: [streamTransport]
-    })
-  }
+      format: winston.format.combine(
+        winston.format.splat(),
+        winston.format.simple()
+      ),
+      transports: [streamTransport],
+    }),
+  };
 });
 
 import { configOrError, persistTemplate } from "./util/config";
@@ -73,14 +76,14 @@ const config = {
   hostDir: configOrError("HOST_DIR"),
   publicDir: path.join(__dirname, "..", "public"),
   stage1: 95,
-  stage2: 80
+  stage2: 80,
 };
 const mock = (
   headCommit: jest.Mock = jest.fn(
     () =>
-      new Promise(solv => solv({ commit: "testcommit", format: "tarpaulin" }))
+      new Promise((solv) => solv({ commit: "testcommit", format: "tarpaulin" }))
   ),
-  updateBranch: jest.Mock = jest.fn(() => new Promise(solv => solv(true)))
+  updateBranch: jest.Mock = jest.fn(() => new Promise((solv) => solv(true)))
 ): MetadataMockType => ({
   database: {} as Db,
   config: config,
@@ -90,11 +93,11 @@ const mock = (
   getPublicDir: jest.fn(() => config.publicDir),
   getGradientStyle: jest.fn(() => ({
     stage1: config.stage1,
-    stage2: config.stage2
+    stage2: config.stage2,
   })),
   getHeadCommit: headCommit,
   updateBranch: updateBranch,
-  createRepository: jest.fn()
+  createRepository: jest.fn(),
 });
 
 const request = async (
@@ -121,7 +124,7 @@ describe("templates", () => {
           "sh.template"
         ),
         outputFile: path.join(HOST_DIR, "sh"),
-        context: { TARGET_URL }
+        context: { TARGET_URL },
       } as Template);
 
       const res = await (await request()).get("/sh").expect(200);
@@ -142,7 +145,7 @@ describe("templates", () => {
           "index.html.template"
         ),
         outputFile: path.join(HOST_DIR, "index.html"),
-        context: { TARGET_URL, CURL_HTTPS: "--https " }
+        context: { TARGET_URL, CURL_HTTPS: "--https " },
       } as Template);
 
       const res = await (await request())
@@ -150,9 +153,7 @@ describe("templates", () => {
         .expect("Content-Type", /html/)
         .expect(200);
       expect(exit).not.toHaveBeenCalled();
-      expect(res.text).toMatch(
-        `curl --https -sSf ${TARGET_URL}/sh | sh`
-      );
+      expect(res.text).toMatch(`curl --https -sSf ${TARGET_URL}/sh | sh`);
     });
   });
 });
@@ -214,7 +215,7 @@ describe("Badges and reports", () => {
   const fakeBadge = badgen({
     label: "coverage",
     status: "120%",
-    color: "#E1C"
+    color: "#E1C",
   });
 
   beforeAll(async () => {
@@ -283,7 +284,7 @@ describe("Badges and reports", () => {
     it("should retrieve the marked format as stored in metadata", async () => {
       const head = jest.fn(
         () =>
-          new Promise(solv =>
+          new Promise((solv) =>
             solv({ commit: "testcommit", format: "cobertura" })
           )
       );
@@ -305,7 +306,7 @@ describe("Badges and reports", () => {
 
     it("should return 404 if head commit not found", async () => {
       const head = jest.fn(
-        () => new Promise(solv => solv(new BranchNotFoundError()))
+        () => new Promise((solv) => solv(new BranchNotFoundError()))
       );
       await (await request(mock(head)))
         .get("/v1/testorg/testrepo/testbranch.html")
@@ -324,7 +325,7 @@ describe("Badges and reports", () => {
     it("should retrieve the stored report file with the associated head commit", async () => {
       const head = jest.fn(
         () =>
-          new Promise(solv =>
+          new Promise((solv) =>
             solv({ commit: "testcommit", format: "cobertura" })
           )
       );
@@ -342,7 +343,7 @@ describe("Badges and reports", () => {
     it("should retrieve the marked format as stored in metadata", async () => {
       const head = jest.fn(
         () =>
-          new Promise(solv =>
+          new Promise((solv) =>
             solv({ commit: "testcommit", format: "tarpaulin" })
           )
       );
@@ -364,7 +365,7 @@ describe("Badges and reports", () => {
 
     it("should return 404 if head commit not found", async () => {
       const head = jest.fn(
-        () => new Promise(solv => solv(new BranchNotFoundError()))
+        () => new Promise((solv) => solv(new BranchNotFoundError()))
       );
       await (await request(mock(head)))
         .get("/v1/testorg/testrepo/testbranch.xml")
@@ -414,7 +415,7 @@ describe("Badges and reports", () => {
 
     it("should return 404 if head commit not found", async () => {
       const head = jest.fn(
-        () => new Promise(solv => solv(new BranchNotFoundError()))
+        () => new Promise((solv) => solv(new BranchNotFoundError()))
       );
       await (await request(mock(head)))
         .get("/v1/testorg/testrepo/testbranch.svg")
@@ -454,7 +455,9 @@ describe("Uploads", () => {
 
     it("should upload the report and generate a badge", async () => {
       const mockMeta = mock();
-      await (await request(mockMeta))
+      await (
+        await request(mockMeta)
+      )
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
         )
@@ -465,7 +468,7 @@ describe("Uploads", () => {
         organization: "testorg",
         repository: "testrepo",
         branch: "newthis",
-        head: { commit: "newthat", format: "tarpaulin" }
+        head: { commit: "newthat", format: "tarpaulin" },
       });
       expect(mockMeta.updateBranch).toHaveBeenCalledTimes(1);
       await fs.promises.access(
@@ -479,7 +482,9 @@ describe("Uploads", () => {
     });
 
     it("should return 401 when token is not correct", async () => {
-      await (await request())
+      await (
+        await request()
+      )
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=wrong&format=tarpaulin`
         )
@@ -488,7 +493,9 @@ describe("Uploads", () => {
     });
 
     it("should return 406 with an invalid format", async () => {
-      await (await request())
+      await (
+        await request()
+      )
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=pepperoni`
         )
@@ -520,8 +527,10 @@ describe("Uploads", () => {
     });
 
     it("should return 500 when Metadata does not create branch", async () => {
-      const update = jest.fn(() => new Promise(solv => solv(false)));
-      await (await request(mock(jest.fn(), update)))
+      const update = jest.fn(() => new Promise((solv) => solv(false)));
+      await (
+        await request(mock(jest.fn(), update))
+      )
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
         )
@@ -531,7 +540,9 @@ describe("Uploads", () => {
 
     it("should return 500 when promise chain is rejected", async () => {
       const update = jest.fn(() => new Promise((_, rej) => rej("fooey 2")));
-      await (await request(mock(jest.fn(), update)))
+      await (
+        await request(mock(jest.fn(), update))
+      )
         .post(
           `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
         )
@@ -547,7 +558,9 @@ describe("Uploads", () => {
 
     it("should upload the report and generate a badge", async () => {
       const mockMeta = mock();
-      await (await request(mockMeta))
+      await (
+        await request(mockMeta)
+      )
         .post(
           `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=cobertura`
         )
@@ -558,7 +571,7 @@ describe("Uploads", () => {
         organization: "testorg",
         repository: "testrepo",
         branch: "newthis",
-        head: { commit: "newthat", format: "cobertura" }
+        head: { commit: "newthat", format: "cobertura" },
       });
       expect(mockMeta.updateBranch).toHaveBeenCalledTimes(1);
       await fs.promises.access(
@@ -572,7 +585,9 @@ describe("Uploads", () => {
     });
 
     it("should return 401 when token is not correct", async () => {
-      await (await request())
+      await (
+        await request()
+      )
         .post(
           `/v1/testorg/testrepo/newthis/newthat.xml?token=wrong&format=cobertura`
         )
@@ -581,7 +596,9 @@ describe("Uploads", () => {
     });
 
     it("should return 406 with an invalid format", async () => {
-      await (await request())
+      await (
+        await request()
+      )
         .post(
           `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=pepperoni`
         )
@@ -613,8 +630,10 @@ describe("Uploads", () => {
     });
 
     it("should return 500 when Metadata does not create branch", async () => {
-      const update = jest.fn(() => new Promise(solv => solv(false)));
-      await (await request(mock(jest.fn(), update)))
+      const update = jest.fn(() => new Promise((solv) => solv(false)));
+      await (
+        await request(mock(jest.fn(), update))
+      )
         .post(
           `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=cobertura`
         )
@@ -624,7 +643,9 @@ describe("Uploads", () => {
 
     it("should return 500 when promise chain is rejected", async () => {
       const update = jest.fn(() => new Promise((_, rej) => rej("fooey 2")));
-      await (await request(mock(jest.fn(), update)))
+      await (
+        await request(mock(jest.fn(), update))
+      )
         .post(
           `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=cobertura`
         )

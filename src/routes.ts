@@ -39,7 +39,7 @@ export default (metadata: Metadata): Router => {
     const badge = badgen({
       label: "coverage",
       status: Math.floor(coverage).toString() + "%",
-      color: formatter.matchColor(coverage, style)
+      color: formatter.matchColor(coverage, style),
     });
 
     // Write report and badge to directory
@@ -62,7 +62,7 @@ export default (metadata: Metadata): Router => {
   router.use(
     "/:shell(bash|sh)",
     express.static(path.join(metadata.getHostDir(), "sh"), {
-      setHeaders: res => res.contentType("text/plain")
+      setHeaders: (res) => res.contentType("text/plain"),
     })
   );
 
@@ -95,7 +95,7 @@ export default (metadata: Metadata): Router => {
     }
 
     let contents = "";
-    req.on("data", raw => {
+    req.on("data", (raw) => {
       if (contents.length <= limit) {
         contents += raw;
       }
@@ -111,7 +111,7 @@ export default (metadata: Metadata): Router => {
         organization: org,
         repository: repo,
         branch,
-        head: { commit, format }
+        head: { commit, format },
       };
 
       try {
@@ -153,7 +153,7 @@ export default (metadata: Metadata): Router => {
       head.commit,
       file
     );
-    fs.access(pathname, fs.constants.R_OK, err =>
+    fs.access(pathname, fs.constants.R_OK, (err) =>
       err === null
         ? res.sendFile(pathname)
         : res.status(404).send(Messages.FileNotFound)
@@ -164,20 +164,20 @@ export default (metadata: Metadata): Router => {
     const { org, repo, branch } = req.params;
 
     metadata.getHeadCommit(org, repo, branch).then(
-      result => {
+      (result) => {
         if (!isError(result)) {
           const identity = {
             organization: org,
             repository: repo,
             branch,
-            head: result
+            head: result,
           };
           retrieveFile(res, identity, "badge.svg");
         } else {
           res.status(404).send(result.message);
         }
       },
-      err => {
+      (err) => {
         logger.error(
           err ?? "Error occurred while fetching commit for GET request"
         );
@@ -190,13 +190,13 @@ export default (metadata: Metadata): Router => {
     const { org, repo, branch } = req.params;
 
     metadata.getHeadCommit(org, repo, branch).then(
-      result => {
+      (result) => {
         if (!isError(result)) {
           const identity = {
             organization: org,
             repository: repo,
             branch,
-            head: result
+            head: result,
           };
           const { fileName } = formats.getFormat(result.format);
           retrieveFile(res, identity, fileName);
@@ -204,7 +204,7 @@ export default (metadata: Metadata): Router => {
           res.status(404).send(result.message);
         }
       },
-      err => {
+      (err) => {
         logger.error(
           err ?? "Error occurred while fetching commit for GET request"
         );
@@ -220,7 +220,7 @@ export default (metadata: Metadata): Router => {
       organization: org,
       repository: repo,
       branch,
-      head: { commit, format: "_" }
+      head: { commit, format: "_" },
     };
     retrieveFile(res, identity, "badge.svg");
   });
@@ -233,7 +233,7 @@ export default (metadata: Metadata): Router => {
       organization: org,
       repository: repo,
       branch,
-      head: { commit, format: "tarpaulin" }
+      head: { commit, format: "tarpaulin" },
     };
     retrieveFile(res, identity, format.fileName);
   });
@@ -245,7 +245,7 @@ export default (metadata: Metadata): Router => {
       organization: org,
       repository: repo,
       branch,
-      head: { commit, format: "cobertura" }
+      head: { commit, format: "cobertura" },
     };
     retrieveFile(res, identity, format.fileName);
   });

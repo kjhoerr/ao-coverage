@@ -13,7 +13,7 @@ import {
   configOrError,
   handleStartup,
   handleShutdown,
-  initializeToken
+  initializeToken,
 } from "./util/config";
 
 // Start-up configuration
@@ -28,12 +28,12 @@ const ENV_CONFIG: EnvConfig = {
   publicDir: path.join(__dirname, "..", "public"),
   hostDir: configOrError("HOST_DIR"),
   stage1: Number(process.env.STAGE_1 ?? 95),
-  stage2: Number(process.env.STAGE_2 ?? 80)
+  stage2: Number(process.env.STAGE_2 ?? 80),
 };
 
 const logger = winston.createLogger(loggerConfig("ROOT"));
 
-handleStartup(MONGO_URI, ENV_CONFIG, TARGET_URL).then(mongo => {
+handleStartup(MONGO_URI, ENV_CONFIG, TARGET_URL).then((mongo) => {
   const app: express.Application = express();
   const metadata = new Metadata(mongo.db(MONGO_DB), ENV_CONFIG);
 
@@ -42,8 +42,7 @@ handleStartup(MONGO_URI, ENV_CONFIG, TARGET_URL).then(mongo => {
       ...loggerConfig("HTTP"),
       colorize: true,
       // filter out token query param from URL
-      msg:
-        '{{req.method}} {{req.url.replace(/token=[-\\w.~]*(&*)/, "token=$1")}} - {{res.statusCode}} {{res.responseTime}}ms'
+      msg: '{{req.method}} {{req.url.replace(/token=[-\\w.~]*(&*)/, "token=$1")}} - {{res.statusCode}} {{res.responseTime}}ms',
     })
   );
 

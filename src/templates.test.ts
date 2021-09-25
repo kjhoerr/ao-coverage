@@ -11,7 +11,7 @@ const genTemplate = (filename: string): Template =>
       "build",
       filename.replace(/template/, "txt")
     ),
-    context: { that: "this", potential: "resolved" }
+    context: { that: "this", potential: "resolved" },
   } as Template);
 
 describe("processTemplate", () => {

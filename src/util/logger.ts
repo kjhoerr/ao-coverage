@@ -24,5 +24,5 @@ export default (
   transports: Transport[];
 } => ({
   format: combine(splat(), timestamp(), label({ label: clazz })),
-  transports: [new Console({ level: level, format: consoleFormat })]
+  transports: [new Console({ level: level, format: consoleFormat })],
 });

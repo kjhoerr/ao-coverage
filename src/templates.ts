@@ -4,23 +4,20 @@ import fs from "fs";
 export interface Template {
   inputFile: string;
   outputFile: string;
-  context: object;
-  data: string | undefined;
+  context: Record<string, string>;
+  data?: string;
 }
 
-export default (_template: Template): Promise<Template> =>
-  fs.promises
-    .readFile(_template.inputFile, "utf-8")
-    .then(buffer => {
-      const translate = handlebars.compile(buffer);
+export default async (_template: Template): Promise<Template> => {
+  const buffer = await fs.promises.readFile(_template.inputFile, "utf-8");
 
-      return {
-        ..._template,
-        data: translate(_template.context)
-      };
-    })
-    .then(template =>
-      fs.promises
-        .writeFile(template.outputFile, template.data)
-        .then(() => template)
-    );
+  const translate = handlebars.compile(buffer);
+  const template = {
+    ..._template,
+    data: translate(_template.context),
+  };
+
+  await fs.promises.writeFile(template.outputFile, template.data);
+
+  return template;
+};

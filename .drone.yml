@@ -15,6 +15,7 @@ steps:
   commands:
   - mkdir -p $HOST_DIR && chown $USER:$USER $HOST_DIR
   - yarn install --immutable --immutable-cache --check-cache
+  - yarn run lint
   - yarn run test:coverage
   - curl --proto '=https' --tlsv1.2 -sSf https://cov.submelon.dev/sh | sh
 

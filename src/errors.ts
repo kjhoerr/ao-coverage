@@ -19,5 +19,5 @@ export const Messages = {
   FileTooLarge: "Uploaded file is too large",
   InvalidFormat: "Invalid reporting format",
   InvalidToken: "Invalid token",
-  UnknownError: "Unknown error occurred"
+  UnknownError: "Unknown error occurred",
 };
