@@ -24,6 +24,22 @@ steps:
     repo: "${DRONE_REPO}"
     tags:
       - "${DRONE_COMMIT_SHA}"
+      - latest
+    target: release
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+  when:
+    event:
+      exclude:
+      - tag
+- name: publish
+  image: plugins/docker
+  settings:
+    repo: "${DRONE_REPO}"
+    tags:
+      - "${DRONE_COMMIT_SHA}"
       - "${DRONE_TAG}"
       - latest
     target: release
@@ -31,6 +47,10 @@ steps:
       from_secret: docker_username
     password:
       from_secret: docker_password
+  when:
+    event:
+      include:
+      - tag
 - name: deploy
   image: quay.io/honestbee/drone-kubernetes 
   environment:

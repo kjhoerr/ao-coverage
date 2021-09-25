@@ -58,6 +58,11 @@ export default (metadata: Metadata): Router => {
     res.sendFile(path.join(metadata.getHostDir(), "index.html"));
   });
 
+  // health check endpoint
+  router.get("/v1/health-check", (_, res) => {
+    res.sendStatus(200);
+  });
+
   // serve script for posting coverage report
   router.use(
     "/:shell(bash|sh)",
