@@ -24,12 +24,28 @@ steps:
     repo: "${DRONE_REPO}"
     tags:
       - "${DRONE_COMMIT_SHA}"
+      - "${DRONE_TAG}"
       - latest
     target: release
     username:
       from_secret: docker_username
     password:
       from_secret: docker_password
+- name: deploy
+  image: quay.io/honestbee/drone-kubernetes 
+  environment:
+    KUBE_SERVER:
+      from_secret: kube_server
+    KUBE_TOKEN:
+      from_secret: kube_token
+  settings:
+    kubernetes_server: "${KUBE_SERVER}"
+    kubernetes_token: "${KUBE_TOKEN}"
+    namespace: default
+    deployment: gitcov-deployment
+    repo: "${DRONE_REPO}"
+    container: gitcov-container
+    tag: "${DRONE_COMMIT_SHA}"
 
 trigger:
   branch:
@@ -38,3 +54,4 @@ trigger:
   - pull_request
   - push
   - custom
+  - tag
