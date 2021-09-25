@@ -3,7 +3,7 @@ type: kubernetes
 name: default
 
 steps:
-- name: AO Coverage Verify
+- name: test
   image: node:lts
   environment:
     FORMAT: cobertura
@@ -18,7 +18,7 @@ steps:
   - yarn run lint
   - yarn run test:coverage
   - curl --proto '=https' --tlsv1.2 -sSf https://cov.submelon.dev/sh | sh
-- name: publish
+- name: publish (no tag)
   image: plugins/docker
   settings:
     repo: "${DRONE_REPO}"
@@ -34,7 +34,7 @@ steps:
     event:
       exclude:
       - tag
-- name: publish
+- name: publish (with tag)
   image: plugins/docker
   settings:
     repo: "${DRONE_REPO}"
