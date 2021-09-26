@@ -64,7 +64,7 @@ steps:
     kubernetes_cert:
       from_secret: kube_cert
   commands:
-    - $(awk '{sub("'"${DRONE_REPO}"':latest","'"${DRONE_REPO}:${DRONE_COMMIT_SHA}"'", $0); print}' .kubernetes/deployment.yaml) > .kubernetes/deployment.yaml
+    - echo $(awk '{sub("'"${DRONE_REPO}"':latest","'"${DRONE_REPO}:${DRONE_COMMIT_SHA}"'", $0); print}' .kubernetes/deployment.yaml) > .kubernetes/deployment.yaml
     - kubectl apply -f .kubernetes
   when:
     event:
