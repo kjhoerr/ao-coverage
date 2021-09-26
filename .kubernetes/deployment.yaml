@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitcov-deployment
+  namespace: default
+  labels:
+    app: gitcov
+spec:
+  selector:
+    matchLabels:
+      app: gitcov
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: gitcov
+    spec:
+      containers:
+      - name: gitcov-container
+        image: kjhoerr/ao-coverage:latest
+        resources:
+          requests:
+            cpu: 100m
+            memory: 76Mi
+          limits:
+            cpu: 250m
+            memory: 200Mi
+        livenessProbe:
+          httpGet:
+            port: gitcov-http
+            path: /v1/health-check
+          initialDelaySeconds: 5
+        readinessProbe:
+          httpGet:
+            port: gitcov-http
+            path: /v1/health-check
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+        ports:
+          - name: gitcov-http
+            containerPort: 80
+            protocol: TCP
+        env:
+          - name: MONGO_DB
+            valueFrom:
+              secretKeyRef:
+                name: cov-secret
+                key: db_name
+          - name: MONGO_URI
+            valueFrom:
+              secretKeyRef:
+                name: cov-secret
+                key: db_uri
+          - name: TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: cov-secret
+                key: cov_token
+          - name: HOST_DIR
+            valueFrom:
+              configMapKeyRef:
+                name: gitcov-configmap
+                key: host_dir
+          - name: TARGET_URL
+            valueFrom:
+              configMapKeyRef:
+                name: gitcov-configmap
+                key: target_url
+        volumeMounts:
+          - name: gitcov-repos
+            mountPath: /data
+        imagePullPolicy: IfNotPresent
+      volumes:
+        - name: gitcov-repos
+          persistentVolumeClaim:
+            claimName: gitcov-pvc

@@ -55,17 +55,17 @@ steps:
       exclude:
       - pull_request
 - name: deploy
-  image: quay.io/honestbee/drone-kubernetes 
+  image: sinlead/drone-kubectl
   settings:
     kubernetes_server:
       from_secret: kube_server
     kubernetes_token:
       from_secret: kube_token
-    namespace: default
-    deployment: gitcov-deployment
-    repo: "${DRONE_REPO}"
-    container: gitcov-container
-    tag: "${DRONE_COMMIT_SHA}"
+    kubernetes_cert:
+      from_secret: kube_cert
+  commands:
+    - $(awk '{sub("'"${DRONE_REPO}"':latest","'"${DRONE_REPO}:${DRONE_COMMIT_SHA}"'", $0); print}' .kubernetes/deployment.yaml) > .kubernetes/deployment.yaml
+    - kubectl apply -f .kubernetes
   when:
     event:
       exclude:
