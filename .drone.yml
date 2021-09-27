@@ -41,7 +41,7 @@ steps:
     repo: "${DRONE_REPO}"
     tags:
       - "${DRONE_COMMIT_SHA}"
-      - "${DRONE_TAG}"
+      - "${DRONE_TAG##v}"
       - latest
     target: release
     username:
