@@ -448,6 +448,12 @@ describe("Uploads", () => {
     }
   });
 
+  describe("GET /v1/health-check", () => {
+    it("should return 200 OK", async () => {
+      await (await request()).get(`/v1/health-check`).send().expect(200);
+    });
+  });
+
   describe("POST /v1/:org/:repo/:branch/:commit.html", () => {
     const data = fs.promises.readFile(
       path.join(__dirname, "..", "example_reports", "tarpaulin-report.html")

@@ -106,11 +106,6 @@ export default (metadata: Metadata): Router => {
       }
     });
     req.on("end", async () => {
-      // Ignore large requests
-      if (contents.length > limit) {
-        return res.status(413).send(Messages.FileTooLarge);
-      }
-
       const formatter = formats.getFormat(format);
       const identity = {
         organization: org,
