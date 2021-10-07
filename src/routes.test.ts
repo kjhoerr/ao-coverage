@@ -116,13 +116,7 @@ describe("templates", () => {
   describe("GET /sh", () => {
     it("should return the sh file containing the curl command", async () => {
       await persistTemplate({
-        inputFile: path.join(
-          __dirname,
-          "..",
-          "public",
-          "templates",
-          "sh.template"
-        ),
+        inputFile: path.join(__dirname, "..", "public", "templates", "sh.tmpl"),
         outputFile: path.join(HOST_DIR, "sh"),
         context: { TARGET_URL },
       } as Template);
@@ -142,7 +136,7 @@ describe("templates", () => {
           "..",
           "public",
           "templates",
-          "index.html.template"
+          "index.html.tmpl"
         ),
         outputFile: path.join(HOST_DIR, "index.html"),
         context: { TARGET_URL, CURL_HTTPS: "--https " },

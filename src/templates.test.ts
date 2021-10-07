@@ -21,7 +21,7 @@ describe("processTemplate", () => {
 
   it("should process the template file with the given context", async () => {
     // Arrange
-    const template = genTemplate("ex.template");
+    const template = genTemplate("ex.tmpl");
 
     // Act
     const result = await processTemplate(template);
@@ -34,7 +34,7 @@ describe("processTemplate", () => {
 
   it("should process the blank file", async () => {
     // Arrange
-    const template = genTemplate("blank.template");
+    const template = genTemplate("blank.tmpl");
 
     // Act
     const result = await processTemplate(template);
