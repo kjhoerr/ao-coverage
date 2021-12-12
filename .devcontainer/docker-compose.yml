@@ -10,7 +10,7 @@ services:
         USER_UID: 1000
         USER_GID: 1000
 
-        INSTALL_ZSH: false
+        INSTALL_ZSH: "false"
         MONGO_TOOLS_VERSION: 4.2
 
         # Volume directory for hosted files. This directory is created on image build with proper permissions. This is set as an env-var in the Dockerfile
