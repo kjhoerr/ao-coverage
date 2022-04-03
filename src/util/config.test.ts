@@ -125,6 +125,8 @@ const MongoMock = (p: Promise<void>): jest.Mock<MongoClient, void[]> =>
       tlsInsecure: false,
       waitQueueTimeoutMS: 0,
       zlibCompressionLevel: 0,
+      srvMaxHosts: 1,
+      srvServiceName: "",
     },
     serverApi: { version: "1" },
     autoEncrypter: undefined,
