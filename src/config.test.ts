@@ -290,10 +290,9 @@ describe("handleStartup", () => {
   const config = {
     hostDir: "/apple",
     publicDir: "/public",
-    targetUrl: "localhost"
+    targetUrl: "localhost",
   } as EnvConfig;
-  const confStartup = (): Promise<MongoClient> =>
-    handleStartup(config, logger);
+  const confStartup = (): Promise<MongoClient> => handleStartup(config, logger);
 
   it("should pass back MongoClient", async () => {
     const superClient = {} as MongoClient;

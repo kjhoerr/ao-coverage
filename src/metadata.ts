@@ -193,7 +193,6 @@ class Metadata {
       stage2: this.config.stage2,
     };
   }
-
 }
 
 export default Metadata;

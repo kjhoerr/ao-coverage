@@ -29,7 +29,10 @@ export const initializeToken = (logger: winston.Logger): string => {
 /**
  * Get environment variable or exit application if it doesn't exist
  */
-export const configOrError = (varName: string, logger: winston.Logger): string => {
+export const configOrError = (
+  varName: string,
+  logger: winston.Logger
+): string => {
   const value = process.env[varName];
   if (value !== undefined) {
     return value;
@@ -42,7 +45,10 @@ export const configOrError = (varName: string, logger: winston.Logger): string =
 /**
  * Process a template and persist based on template.
  */
-export const persistTemplate = async (input: Template, logger: winston.Logger): Promise<void> => {
+export const persistTemplate = async (
+  input: Template,
+  logger: winston.Logger
+): Promise<void> => {
   try {
     const template = await processTemplate(input);
     logger.debug("Generated '%s' from template file", template.outputFile);
@@ -70,13 +76,16 @@ export const persistTemplate = async (input: Template, logger: winston.Logger): 
 
 /**
  * Handle server start-up functions:
- * 
+ *
  * - Open database connection
  * - Generate documents from templates based on configuration
- * 
+ *
  * If one of these actions cannot be performed, it will call `process.exit(1)`.
  */
-export const handleStartup = async (config: EnvConfig, logger: winston.Logger): Promise<MongoClient> => {
+export const handleStartup = async (
+  config: EnvConfig,
+  logger: winston.Logger
+): Promise<MongoClient> => {
   try {
     const { hostDir, publicDir, dbUri, targetUrl } = config;
     await fs.promises.access(hostDir, fs.constants.R_OK | fs.constants.W_OK);
@@ -88,21 +97,27 @@ export const handleStartup = async (config: EnvConfig, logger: winston.Logger): 
       Promise.reject(err.message ?? "Unable to connect to database")
     );
 
-    await persistTemplate({
-      inputFile: path.join(publicDir, "templates", "sh.tmpl"),
-      outputFile: path.join(hostDir, "sh"),
-      context: { TARGET_URL: targetUrl },
-    } as Template, logger);
-    await persistTemplate({
-      inputFile: path.join(publicDir, "templates", "index.html.tmpl"),
-      outputFile: path.join(hostDir, "index.html"),
-      context: {
-        TARGET_URL: targetUrl,
-        CURL_HTTPS: targetUrl.includes("https")
-          ? "--proto '=https' --tlsv1.2 "
-          : "",
-      },
-    } as Template, logger);
+    await persistTemplate(
+      {
+        inputFile: path.join(publicDir, "templates", "sh.tmpl"),
+        outputFile: path.join(hostDir, "sh"),
+        context: { TARGET_URL: targetUrl },
+      } as Template,
+      logger
+    );
+    await persistTemplate(
+      {
+        inputFile: path.join(publicDir, "templates", "index.html.tmpl"),
+        outputFile: path.join(hostDir, "index.html"),
+        context: {
+          TARGET_URL: targetUrl,
+          CURL_HTTPS: targetUrl.includes("https")
+            ? "--proto '=https' --tlsv1.2 "
+            : "",
+        },
+      } as Template,
+      logger
+    );
 
     return mongo;
   } catch (err) {
@@ -125,10 +140,12 @@ export const handleShutdown =
       logger.info("MongoDB client connection closed.");
 
       // must await for callback - wrapped in Promise
-      await new Promise((res, rej) => server.close((err) => {
-        logger.info("Express down.");
-        (err ? rej : res)(err);
-      }));
+      await new Promise((res, rej) =>
+        server.close((err) => {
+          logger.info("Express down.");
+          (err ? rej : res)(err);
+        })
+      );
 
       process.exit(0);
     } catch (e) {

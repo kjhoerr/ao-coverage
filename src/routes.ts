@@ -9,12 +9,14 @@ import Metadata, { HeadIdentity, isError } from "./metadata";
 import loggerConfig from "./util/logger";
 import { InvalidReportDocumentError, Messages } from "./errors";
 
-/** 
+/**
  * Provide routes from application state
  */
 const routes = (metadata: Metadata): Router => {
   const router = Router();
-  const logger = winston.createLogger(loggerConfig("HTTP", metadata.logger.level));
+  const logger = winston.createLogger(
+    loggerConfig("HTTP", metadata.logger.level)
+  );
 
   /**
    * Persist uploaded coverage report and creates coverage badge

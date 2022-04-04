@@ -60,10 +60,16 @@ handleStartup(ENV_CONFIG, logger).then((mongo) => {
   // actual app routes
   app.use(routes(metadata));
 
-  app.use(expressWinston.errorLogger(loggerConfig("_ERR", ENV_CONFIG.logLevel)));
+  app.use(
+    expressWinston.errorLogger(loggerConfig("_ERR", ENV_CONFIG.logLevel))
+  );
 
   const server = app.listen(ENV_CONFIG.port, ENV_CONFIG.bindAddress, () => {
-    logger.info("Express has started: http://%s:%d/", ENV_CONFIG.bindAddress, ENV_CONFIG.port);
+    logger.info(
+      "Express has started: http://%s:%d/",
+      ENV_CONFIG.bindAddress,
+      ENV_CONFIG.port
+    );
   });
 
   // application exit handling

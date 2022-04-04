@@ -124,11 +124,20 @@ const TARGET_URL = "https://localhost:3000";
 describe("templates", () => {
   describe("GET /sh", () => {
     it("should return the sh file containing the curl command", async () => {
-      await persistTemplate({
-        inputFile: path.join(__dirname, "..", "public", "templates", "sh.tmpl"),
-        outputFile: path.join(HOST_DIR, "sh"),
-        context: { TARGET_URL },
-      } as Template, logger);
+      await persistTemplate(
+        {
+          inputFile: path.join(
+            __dirname,
+            "..",
+            "public",
+            "templates",
+            "sh.tmpl"
+          ),
+          outputFile: path.join(HOST_DIR, "sh"),
+          context: { TARGET_URL },
+        } as Template,
+        logger
+      );
 
       const res = await (await request()).get("/sh").expect(200);
       expect(exit).not.toHaveBeenCalled();
@@ -139,17 +148,20 @@ describe("templates", () => {
 
   describe("GET /", () => {
     it("should return the index HTML file containing the bash command", async () => {
-      await persistTemplate({
-        inputFile: path.join(
-          __dirname,
-          "..",
-          "public",
-          "templates",
-          "index.html.tmpl"
-        ),
-        outputFile: path.join(HOST_DIR, "index.html"),
-        context: { TARGET_URL, CURL_HTTPS: "--https " },
-      } as Template, logger);
+      await persistTemplate(
+        {
+          inputFile: path.join(
+            __dirname,
+            "..",
+            "public",
+            "templates",
+            "index.html.tmpl"
+          ),
+          outputFile: path.join(HOST_DIR, "index.html"),
+          context: { TARGET_URL, CURL_HTTPS: "--https " },
+        } as Template,
+        logger
+      );
 
       const res = await (await request())
         .get("/")
