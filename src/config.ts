@@ -5,13 +5,13 @@ import path from "path";
 import fs from "fs";
 import { v4 as uuid } from "uuid";
 
-import loggerConfig from "./logger";
-import processTemplate, { Template } from "../templates";
-import { EnvConfig } from "../metadata";
+import processTemplate, { Template } from "./templates";
+import { EnvConfig } from "./metadata";
 
-const logger = winston.createLogger(loggerConfig("ROOT"));
-
-export const initializeToken = (): string => {
+/**
+ * Generate a token for use as the user self-identifier
+ */
+export const initializeToken = (logger: winston.Logger): string => {
   //TODO check for token in hostDir/persist created token in hostDir so it's not regenerated on startup
   const newToken = uuid();
 
@@ -26,7 +26,10 @@ export const initializeToken = (): string => {
   return newToken;
 };
 
-export const configOrError = (varName: string): string => {
+/**
+ * Get environment variable or exit application if it doesn't exist
+ */
+export const configOrError = (varName: string, logger: winston.Logger): string => {
   const value = process.env[varName];
   if (value !== undefined) {
     return value;
@@ -36,7 +39,10 @@ export const configOrError = (varName: string): string => {
   }
 };
 
-export const persistTemplate = async (input: Template): Promise<void> => {
+/**
+ * Process a template and persist based on template.
+ */
+export const persistTemplate = async (input: Template, logger: winston.Logger): Promise<void> => {
   try {
     const template = await processTemplate(input);
     logger.debug("Generated '%s' from template file", template.outputFile);
@@ -62,19 +68,23 @@ export const persistTemplate = async (input: Template): Promise<void> => {
   }
 };
 
-export const handleStartup = async (
-  mongoUri: string,
-  config: EnvConfig,
-  targetUrl: string
-): Promise<MongoClient> => {
+/**
+ * Handle server start-up functions:
+ * 
+ * - Open database connection
+ * - Generate documents from templates based on configuration
+ * 
+ * If one of these actions cannot be performed, it will call `process.exit(1)`.
+ */
+export const handleStartup = async (config: EnvConfig, logger: winston.Logger): Promise<MongoClient> => {
   try {
-    const { hostDir, publicDir } = config;
+    const { hostDir, publicDir, dbUri, targetUrl } = config;
     await fs.promises.access(hostDir, fs.constants.R_OK | fs.constants.W_OK);
     if (!path.isAbsolute(hostDir)) {
       await Promise.reject("hostDir must be an absolute path");
     }
 
-    const mongo = await MongoClient.connect(mongoUri).catch((err: MongoError) =>
+    const mongo = await MongoClient.connect(dbUri).catch((err: MongoError) =>
       Promise.reject(err.message ?? "Unable to connect to database")
     );
 
@@ -82,7 +92,7 @@ export const handleStartup = async (
       inputFile: path.join(publicDir, "templates", "sh.tmpl"),
       outputFile: path.join(hostDir, "sh"),
       context: { TARGET_URL: targetUrl },
-    } as Template);
+    } as Template, logger);
     await persistTemplate({
       inputFile: path.join(publicDir, "templates", "index.html.tmpl"),
       outputFile: path.join(hostDir, "index.html"),
@@ -92,7 +102,7 @@ export const handleStartup = async (
           ? "--proto '=https' --tlsv1.2 "
           : "",
       },
-    } as Template);
+    } as Template, logger);
 
     return mongo;
   } catch (err) {
@@ -101,22 +111,27 @@ export const handleStartup = async (
   }
 };
 
+/**
+ * Callback for NodeJS `process.on()` to handle shutdown signals
+ * and close open connections.
+ */
 export const handleShutdown =
-  (mongo: MongoClient, server: Server) =>
-  (signal: NodeJS.Signals): Promise<void> => {
+  (mongo: MongoClient, server: Server, logger: winston.Logger) =>
+  async (signal: NodeJS.Signals): Promise<void> => {
     logger.warn("%s signal received. Closing shop.", signal);
 
-    return mongo
-      .close()
-      .then(() => {
-        logger.info("MongoDB client connection closed.");
-        return new Promise((res, rej) =>
-          server.close((err) => {
-            logger.info("Express down.");
-            (err ? rej : res)(err);
-          })
-        );
-      })
-      .then(() => process.exit(0))
-      .catch(() => process.exit(1));
+    try {
+      await mongo.close();
+      logger.info("MongoDB client connection closed.");
+
+      // must await for callback - wrapped in Promise
+      await new Promise((res, rej) => server.close((err) => {
+        logger.info("Express down.");
+        (err ? rej : res)(err);
+      }));
+
+      process.exit(0);
+    } catch (e) {
+      process.exit(1);
+    }
   };

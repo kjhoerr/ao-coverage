@@ -1,6 +1,9 @@
 import handlebars from "handlebars";
 import fs from "fs";
 
+/**
+ * Information for processing a template file into the output file
+ */
 export interface Template {
   inputFile: string;
   outputFile: string;
@@ -8,6 +11,9 @@ export interface Template {
   data?: string;
 }
 
+/**
+ * Process input file and produce file at given output location
+ */
 export default async (_template: Template): Promise<Template> => {
   const buffer = await fs.promises.readFile(_template.inputFile, "utf-8");
 

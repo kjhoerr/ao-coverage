@@ -10,12 +10,6 @@ interface HeadContext {
   format: string;
 }
 
-export const isError = (
-  obj: HeadContext | BranchNotFoundError
-): obj is BranchNotFoundError => {
-  return Object.keys(obj).includes("name");
-};
-
 interface Branch {
   head: HeadContext | string;
 }
@@ -37,49 +31,62 @@ export interface Repository {
   branches: BranchList;
 }
 
-const logger = winston.createLogger(loggerConfig("META"));
-
+/**
+ * Holds environment configuration items for the application
+ */
 export interface EnvConfig {
-  token: string;
+  /** Express value to bind to a given address */
+  bindAddress: string;
+  /** Express value for port */
+  port: number;
+  /** Express value to limit uploads to server */
   uploadLimit: number;
+  /** Configuration for the database name */
+  dbName: string;
+  /** Configuration for the database URI */
+  dbUri: string;
+  /** The address given for communicating back to the server */
+  targetUrl: string;
+  /** The host directory for uploaded files */
   hostDir: string;
+  /** The public directory for static files */
   publicDir: string;
+  /** The application server token to serve as user self-identifier */
+  token: string;
+  /** Gradient setting 1 */
   stage1: number;
+  /** Gradient setting 2 */
   stage2: number;
+  /** Log level across application */
+  logLevel: string;
 }
 
+/**
+ * Check if provided response is a known application error
+ */
+export const isError = (
+  obj: HeadContext | BranchNotFoundError
+): obj is BranchNotFoundError => {
+  return Object.keys(obj).includes("name");
+};
+
+/**
+ * Handles data routing for application
+ */
 class Metadata {
   database: Db;
   config: EnvConfig;
+  logger: winston.Logger;
 
   constructor(client: Db, data: EnvConfig) {
+    this.logger = winston.createLogger(loggerConfig("META", data.logLevel));
     this.database = client;
     this.config = data;
   }
 
-  getToken(): string {
-    return this.config.token;
-  }
-
-  getUploadLimit(): number {
-    return this.config.uploadLimit;
-  }
-
-  getHostDir(): string {
-    return this.config.hostDir;
-  }
-
-  getPublicDir(): string {
-    return this.config.publicDir;
-  }
-
-  getGradientStyle(): GradientStyle {
-    return {
-      stage1: this.config.stage1,
-      stage2: this.config.stage2,
-    };
-  }
-
+  /**
+   * Retrieve the latest commit to the given branch
+   */
   async getHeadCommit(
     organization: string,
     repository: string,
@@ -98,7 +105,7 @@ class Metadata {
       const head = typeof limb.head === "string" ? limb.head : limb.head.commit;
       const format =
         typeof limb.head === "string" ? "tarpaulin" : limb.head.format;
-      logger.debug(
+      this.logger.debug(
         "Found commit %s for ORB %s/%s/%s (format %s)",
         head,
         organization,
@@ -112,6 +119,9 @@ class Metadata {
     }
   }
 
+  /**
+   * Update the database with the latest commit to a branch
+   */
   async updateBranch(identity: HeadIdentity): Promise<boolean> {
     const { organization, repository: name, branch, head } = identity;
     const result = await this.database
@@ -128,6 +138,9 @@ class Metadata {
     return result.ok === 1;
   }
 
+  /**
+   * Add a repository metadata document to the database
+   */
   async createRepository(identity: HeadIdentity): Promise<boolean> {
     const { organization, repository: name, branch, head } = identity;
     const repo: Repository = {
@@ -142,6 +155,45 @@ class Metadata {
 
     return result.acknowledged;
   }
+
+  /**
+   * Retrieve the application token from configuration
+   */
+  getToken(): string {
+    return this.config.token;
+  }
+
+  /**
+   * Retrieve the upload limit for files from configuration
+   */
+  getUploadLimit(): number {
+    return this.config.uploadLimit;
+  }
+
+  /**
+   * Retrieve the host for uploaded documents directory from configuration
+   */
+  getHostDir(): string {
+    return this.config.hostDir;
+  }
+
+  /**
+   * Retrieve the public static file directory from configuration
+   */
+  getPublicDir(): string {
+    return this.config.publicDir;
+  }
+
+  /**
+   * Retrieve the gradient style from configuration
+   */
+  getGradientStyle(): GradientStyle {
+    return {
+      stage1: this.config.stage1,
+      stage2: this.config.stage2,
+    };
+  }
+
 }
 
 export default Metadata;

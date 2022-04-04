@@ -8,6 +8,8 @@ import express from "express";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
+import { Writable } from "stream";
+import winston from "winston";
 
 dotenv.config();
 
@@ -22,9 +24,6 @@ test("HOST_DIR must be readable and writable", () => {
     )
   ).not.toThrowError();
 });
-
-import { Writable } from "stream";
-import winston from "winston";
 
 let output = "";
 
@@ -48,7 +47,8 @@ jest.mock("./util/logger", () => {
   };
 });
 
-import { configOrError, persistTemplate } from "./util/config";
+import { configOrError, persistTemplate } from "./config";
+import loggerConfig from "./util/logger";
 import routes from "./routes";
 import Metadata, { EnvConfig } from "./metadata";
 import { Template } from "./templates";
@@ -57,6 +57,7 @@ import { badgen } from "badgen";
 import { BranchNotFoundError } from "./errors";
 
 type MetadataMockType = {
+  logger: winston.Logger;
   database: Db;
   config: EnvConfig;
   getHeadCommit: jest.Mock;
@@ -68,15 +69,22 @@ type MetadataMockType = {
   updateBranch: jest.Mock;
   createRepository: jest.Mock;
 };
+const logger = winston.createLogger(loggerConfig("TEST", "debug"));
 
 const config = {
   token: "THISISCORRECT",
   // should be just larger than the example report used
   uploadLimit: Number(40000),
-  hostDir: configOrError("HOST_DIR"),
+  hostDir: configOrError("HOST_DIR", logger),
   publicDir: path.join(__dirname, "..", "public"),
   stage1: 95,
   stage2: 80,
+  bindAddress: "localhost",
+  targetUrl: "http://localhost:3000/",
+  port: 3000,
+  dbName: "ao-coverage",
+  dbUri: "localhost",
+  logLevel: "debug",
 };
 const mock = (
   headCommit: jest.Mock = jest.fn(
@@ -85,6 +93,7 @@ const mock = (
   ),
   updateBranch: jest.Mock = jest.fn(() => new Promise((solv) => solv(true)))
 ): MetadataMockType => ({
+  logger,
   database: {} as Db,
   config: config,
   getToken: jest.fn(() => config.token),
@@ -109,7 +118,7 @@ const request = async (
   return _request(app);
 };
 
-const HOST_DIR = configOrError("HOST_DIR");
+const HOST_DIR = configOrError("HOST_DIR", logger);
 const TARGET_URL = "https://localhost:3000";
 
 describe("templates", () => {
@@ -119,7 +128,7 @@ describe("templates", () => {
         inputFile: path.join(__dirname, "..", "public", "templates", "sh.tmpl"),
         outputFile: path.join(HOST_DIR, "sh"),
         context: { TARGET_URL },
-      } as Template);
+      } as Template, logger);
 
       const res = await (await request()).get("/sh").expect(200);
       expect(exit).not.toHaveBeenCalled();
@@ -140,7 +149,7 @@ describe("templates", () => {
         ),
         outputFile: path.join(HOST_DIR, "index.html"),
         context: { TARGET_URL, CURL_HTTPS: "--https " },
-      } as Template);
+      } as Template, logger);
 
       const res = await (await request())
         .get("/")

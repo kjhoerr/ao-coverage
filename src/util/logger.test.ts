@@ -12,7 +12,7 @@ describe("Logger configurer", () => {
     };
 
     // Act
-    const result = configureLogger(clazz);
+    const result = configureLogger(clazz, adapter.level);
     const actual = result.format.transform(Object.assign({}, adapter));
 
     // Assert
@@ -34,7 +34,7 @@ describe("Logger configurer", () => {
     };
 
     // Act
-    const result = configureLogger(label);
+    const result = configureLogger(label, adapter.level);
     const actual = result.format.transform(Object.assign({}, adapter));
 
     // Assert
@@ -51,7 +51,7 @@ describe("Logger configurer", () => {
     const label = "aaa";
 
     // Act
-    const result = configureLogger(label);
+    const result = configureLogger(label, "info");
 
     // Assert
     expect(result.transports).toBeInstanceOf(Array);

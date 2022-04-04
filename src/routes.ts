@@ -9,11 +9,16 @@ import Metadata, { HeadIdentity, isError } from "./metadata";
 import loggerConfig from "./util/logger";
 import { InvalidReportDocumentError, Messages } from "./errors";
 
-const logger = winston.createLogger(loggerConfig("HTTP"));
-
-export default (metadata: Metadata): Router => {
+/** 
+ * Provide routes from application state
+ */
+const routes = (metadata: Metadata): Router => {
   const router = Router();
+  const logger = winston.createLogger(loggerConfig("HTTP", metadata.logger.level));
 
+  /**
+   * Persist uploaded coverage report and creates coverage badge
+   */
   const commitFormatDocs = async (
     contents: string,
     identity: HeadIdentity,
@@ -138,6 +143,9 @@ export default (metadata: Metadata): Router => {
     });
   });
 
+  /**
+   * Read a file from the host directory.
+   */
   const retrieveFile = (
     res: express.Response,
     identity: HeadIdentity,
@@ -238,6 +246,7 @@ export default (metadata: Metadata): Router => {
     retrieveFile(res, identity, format.fileName);
   });
 
+  // provide hard link for commit
   router.get("/v1/:org/:repo/:branch/:commit.xml", (req, res) => {
     const { org, repo, branch, commit } = req.params;
     const format = formats.formats.cobertura;
@@ -250,6 +259,7 @@ export default (metadata: Metadata): Router => {
     retrieveFile(res, identity, format.fileName);
   });
 
+  // return 404 for all other routes
   router.use((_, res) => {
     res.status(404);
     res.sendFile(path.join(metadata.getPublicDir(), "static", "404.html"));
@@ -257,3 +267,5 @@ export default (metadata: Metadata): Router => {
 
   return router;
 };
+
+export default routes;

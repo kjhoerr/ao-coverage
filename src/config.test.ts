@@ -4,10 +4,12 @@ const exit = jest
 
 import { Writable } from "stream";
 import winston from "winston";
+import loggerConfig from "./util/logger";
 
 let output = "";
+const logger = winston.createLogger(loggerConfig("TEST", "debug"));
 
-jest.mock("./logger", () => {
+jest.mock("./util/logger", () => {
   const stream = new Writable();
   stream._write = (chunk, _encoding, next) => {
     output = output += chunk.toString();
@@ -45,8 +47,8 @@ import {
 import { Server } from "http";
 import path from "path";
 import fs from "fs";
-import * as templates from "../templates";
-import { EnvConfig } from "../metadata";
+import * as templates from "./templates";
+import { EnvConfig } from "./metadata";
 
 const CommonMocks = {
   connect: jest.fn(),
@@ -164,7 +166,7 @@ describe("initializeToken", () => {
     output = "";
 
     // Act
-    const result = initializeToken();
+    const result = initializeToken(logger);
 
     // Assert
     expect(result).toMatch(/([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})/);
@@ -183,7 +185,7 @@ describe("configOrError", () => {
     // Act
     let result;
     try {
-      result = configOrError("APPLESAUCE");
+      result = configOrError("APPLESAUCE", logger);
     } catch (err) {
       //
     }
@@ -198,7 +200,7 @@ describe("configOrError", () => {
     process.env.CHRYSANTHEMUM = "hello";
 
     // Act
-    const result = configOrError("CHRYSANTHEMUM");
+    const result = configOrError("CHRYSANTHEMUM", logger);
 
     // Assert
     expect(result).toEqual(process.env.CHRYSANTHEMUM);
@@ -224,7 +226,7 @@ describe("persistTemplate", () => {
       );
     const fsAccess = jest.spyOn(fs.promises, "access").mockResolvedValue();
 
-    await persistTemplate(template);
+    await persistTemplate(template, logger);
 
     expect(processTemplate).toHaveBeenCalledWith(template);
     expect(fsAccess).not.toHaveBeenCalled();
@@ -244,7 +246,7 @@ describe("persistTemplate", () => {
       .mockRejectedValue("baa");
     const fsAccess = jest.spyOn(fs.promises, "access").mockResolvedValue();
 
-    await persistTemplate(template);
+    await persistTemplate(template, logger);
 
     expect(processTemplate).toHaveBeenCalledWith(template);
     expect(fsAccess).toHaveBeenCalledWith(
@@ -267,7 +269,7 @@ describe("persistTemplate", () => {
       .mockRejectedValue("baz");
     const fsAccess = jest.spyOn(fs.promises, "access").mockRejectedValue("bar");
 
-    await persistTemplate(template);
+    await persistTemplate(template, logger);
 
     expect(processTemplate).toHaveBeenCalledWith(template);
     expect(fsAccess).toHaveBeenCalledWith(
@@ -288,9 +290,10 @@ describe("handleStartup", () => {
   const config = {
     hostDir: "/apple",
     publicDir: "/public",
+    targetUrl: "localhost"
   } as EnvConfig;
   const confStartup = (): Promise<MongoClient> =>
-    handleStartup("", config, "localhost");
+    handleStartup(config, logger);
 
   it("should pass back MongoClient", async () => {
     const superClient = {} as MongoClient;
@@ -429,7 +432,7 @@ describe("handleShutdown", () => {
 
     // Act
     try {
-      await handleShutdown(mongo, server)("SIGINT");
+      await handleShutdown(mongo, server, logger)("SIGINT");
     } catch (err) {
       //
     }
@@ -445,7 +448,7 @@ describe("handleShutdown", () => {
 
     // Act
     try {
-      await handleShutdown(mongo, server)("SIGINT");
+      await handleShutdown(mongo, server, logger)("SIGINT");
     } catch (err) {
       //
     }
@@ -461,7 +464,7 @@ describe("handleShutdown", () => {
 
     // Act
     try {
-      await handleShutdown(mongo, server)("SIGINT");
+      await handleShutdown(mongo, server, logger)("SIGINT");
     } catch (err) {
       //
     }
