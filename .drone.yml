@@ -3,7 +3,7 @@ type: kubernetes
 name: default
 
 steps:
-- name: test
+- name: Test
   image: node:lts
   environment:
     FORMAT: cobertura
@@ -18,7 +18,8 @@ steps:
   - yarn run lint
   - yarn run test:coverage
   - curl --proto '=https' --tlsv1.2 -sSf https://cov.submelon.dev/sh | sh
-- name: build cache
+
+- name: Build cache
   image: plugins/docker
   settings:
     repo: "${DRONE_REPO}"
@@ -33,9 +34,9 @@ steps:
   when:
     event:
       exclude:
-      - tag
       - pull_request
-- name: publish (no tag)
+
+- name: Publish (no tag)
   image: plugins/docker
   settings:
     repo: "${DRONE_REPO}"
@@ -53,7 +54,8 @@ steps:
       exclude:
       - tag
       - pull_request
-- name: publish (with tag)
+
+- name: Publish (with tag)
   image: plugins/docker
   settings:
     repo: "${DRONE_REPO}"
@@ -61,6 +63,7 @@ steps:
       - "${DRONE_COMMIT_SHA}"
       - "${DRONE_TAG##v}"
       - latest
+    cache_from: "${DRONE_REPO}:cache"
     target: release
     username:
       from_secret: docker_username
@@ -72,7 +75,8 @@ steps:
       - tag
       exclude:
       - pull_request
-- name: deploy
+
+- name: Deploy
   image: kjhoerr/drone-kubectl:latest
   settings:
     kubernetes_server:

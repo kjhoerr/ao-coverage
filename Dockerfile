@@ -8,7 +8,7 @@ COPY package*.json ./
 COPY yarn.lock ./
 COPY .yarnrc.yml ./
 COPY .yarn ./.yarn
-RUN yarn install
+RUN yarn install --immutable --immutable-cache
 
 # Stage 3. TS compilation
 FROM dependencies AS build

@@ -12,6 +12,17 @@ import winston from "winston";
 
 dotenv.config();
 
+jest.mock("./util/logger", () => ({
+  __esModule: true,
+  default: () => ({
+    format: winston.format.combine(
+      winston.format.splat(),
+      winston.format.simple()
+    ),
+    transports: [new winston.transports.Console({ silent: true })],
+  }),
+}));
+
 test("Environment variable HOST_DIR must be defined", () => {
   expect(process.env.HOST_DIR).not.toBeUndefined();
 });
