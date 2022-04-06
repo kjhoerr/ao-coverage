@@ -18,6 +18,23 @@ steps:
   - yarn run lint
   - yarn run test:coverage
   - curl --proto '=https' --tlsv1.2 -sSf https://cov.submelon.dev/sh | sh
+- name: build cache
+  image: plugins/docker
+  settings:
+    repo: "${DRONE_REPO}"
+    tags:
+      - cache
+    cache_from: "${DRONE_REPO}:cache"
+    target: dependencies
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+  when:
+    event:
+      exclude:
+      - tag
+      - pull_request
 - name: publish (no tag)
   image: plugins/docker
   settings:
@@ -25,6 +42,7 @@ steps:
     tags:
       - "${DRONE_COMMIT_SHA}"
       - latest
+    cache_from: "${DRONE_REPO}:cache"
     target: release
     username:
       from_secret: docker_username
