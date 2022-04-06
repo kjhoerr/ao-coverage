@@ -12,7 +12,8 @@
 	"extensions": [
 		"dbaeumer.vscode-eslint",
 		"mongodb.mongodb-vscode",
-		"esbenp.prettier-vscode"
+		"esbenp.prettier-vscode",
+		"arcanis.vscode-zipfs"
 	],
 	"forwardPorts": [3000, 27017],
 	"postCreateCommand": "yarn install",

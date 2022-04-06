@@ -1,16 +1,16 @@
-// The environment variable HOST_DIR must be defined for the tests to
-// work. Mocking exit gives a more descriptive error.
-const exit = jest
-  .spyOn(process, "exit")
-  .mockImplementation(() => undefined as never);
 import _request, { SuperTest, Test } from "supertest";
 import express from "express";
-import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import winston from "winston";
+import { Db } from "mongodb";
+import { badgen } from "badgen";
 
-dotenv.config();
+import { persistTemplate } from "./config";
+import routes from "./routes";
+import Metadata, { EnvConfig } from "./metadata";
+import { Template } from "./templates";
+import { BranchNotFoundError } from "./errors";
 
 jest.mock("./util/logger", () => ({
   __esModule: true,
@@ -23,26 +23,9 @@ jest.mock("./util/logger", () => ({
   }),
 }));
 
-test("Environment variable HOST_DIR must be defined", () => {
-  expect(process.env.HOST_DIR).not.toBeUndefined();
-});
-test("HOST_DIR must be readable and writable", () => {
-  expect(() =>
-    fs.accessSync(
-      process.env.HOST_DIR ?? "",
-      fs.constants.W_OK | fs.constants.R_OK
-    )
-  ).not.toThrowError();
-});
-
-import { configOrError, persistTemplate } from "./config";
 import loggerConfig from "./util/logger";
-import routes from "./routes";
-import Metadata, { EnvConfig } from "./metadata";
-import { Template } from "./templates";
-import { Db } from "mongodb";
-import { badgen } from "badgen";
-import { BranchNotFoundError } from "./errors";
+import dotenv from "dotenv";
+dotenv.config();
 
 type MetadataMockType = {
   logger: winston.Logger;
@@ -57,18 +40,29 @@ type MetadataMockType = {
   updateBranch: jest.Mock;
   createRepository: jest.Mock;
 };
-const logger = winston.createLogger(loggerConfig("TEST", "debug"));
+
+const LOGGER = winston.createLogger(loggerConfig("TEST", "debug"));
+const HOST_DIR =
+  process.env.HOST_DIR ??
+  (() => {
+    const dir = path.join(__dirname, "..", "dist");
+    console.warn(
+      `WARNING: HOST_DIR is not set - this is used to query files in src/routes.test.ts. Using '${dir}' as default HOST_DIR.`
+    );
+    return dir;
+  })();
+const TARGET_URL = "https://localhost:3000";
 
 const config = {
   token: "THISISCORRECT",
   // should be just larger than the example report used
   uploadLimit: Number(40000),
-  hostDir: configOrError("HOST_DIR", logger),
+  hostDir: HOST_DIR,
   publicDir: path.join(__dirname, "..", "public"),
   stage1: 95,
   stage2: 80,
   bindAddress: "localhost",
-  targetUrl: "http://localhost:3000/",
+  targetUrl: TARGET_URL,
   port: 3000,
   dbName: "ao-coverage",
   dbUri: "localhost",
@@ -81,7 +75,7 @@ const mock = (
   ),
   updateBranch: jest.Mock = jest.fn(() => new Promise((solv) => solv(true)))
 ): MetadataMockType => ({
-  logger,
+  logger: LOGGER,
   database: {} as Db,
   config: config,
   getToken: jest.fn(() => config.token),
@@ -106,8 +100,13 @@ const request = async (
   return _request(app);
 };
 
-const HOST_DIR = configOrError("HOST_DIR", logger);
-const TARGET_URL = "https://localhost:3000";
+test("HOST_DIR must be readable and writable", () => {
+  expect(() => {
+    // If read/write is okay, attempt directory creation for test compatibility
+    fs.mkdirSync(HOST_DIR, { recursive: true });
+    fs.accessSync(HOST_DIR, fs.constants.W_OK | fs.constants.R_OK);
+  }).not.toThrowError();
+});
 
 describe("templates", () => {
   describe("GET /sh", () => {
@@ -124,11 +123,10 @@ describe("templates", () => {
           outputFile: path.join(HOST_DIR, "sh"),
           context: { TARGET_URL },
         } as Template,
-        logger
+        LOGGER
       );
 
       const res = await (await request()).get("/sh").expect(200);
-      expect(exit).not.toHaveBeenCalled();
       expect(res.text).toMatch("curl -X POST");
       expect(res.text).toMatch(`url="${TARGET_URL}"`);
     });
@@ -148,14 +146,13 @@ describe("templates", () => {
           outputFile: path.join(HOST_DIR, "index.html"),
           context: { TARGET_URL, CURL_HTTPS: "--https " },
         } as Template,
-        logger
+        LOGGER
       );
 
       const res = await (await request())
         .get("/")
         .expect("Content-Type", /html/)
         .expect(200);
-      expect(exit).not.toHaveBeenCalled();
       expect(res.text).toMatch(`curl --https -sSf ${TARGET_URL}/sh | sh`);
     });
   });
