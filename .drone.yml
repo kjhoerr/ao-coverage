@@ -55,7 +55,7 @@ steps:
       exclude:
       - pull_request
 - name: deploy
-  image: sinlead/drone-kubectl
+  image: kjhoerr/drone-kubectl:latest
   settings:
     kubernetes_server:
       from_secret: kube_server
