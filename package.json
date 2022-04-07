@@ -24,6 +24,7 @@
   "license": "Parity-7.0.0",
   "dependencies": {
     "badgen": "^3.2.2",
+    "bcrypt": "^5.0.1",
     "bson": "^4.6.2",
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
@@ -39,6 +40,7 @@
   },
   "devDependencies": {
     "@microsoft/tsdoc": "^0.13.2",
+    "@types/bcrypt": "^5.0.0",
     "@types/express": "^4.17.13",
     "@types/jest": "^27.4.1",
     "@types/jsdom": "^16.2.14",

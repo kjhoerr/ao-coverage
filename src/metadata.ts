@@ -1,5 +1,7 @@
-import { Db } from "mongodb";
+import { Db, MongoClient } from "mongodb";
 import winston from "winston";
+import bcrypt from "bcrypt";
+import { v4 as uuid } from "uuid";
 
 import loggerConfig from "./util/logger";
 import { BranchNotFoundError } from "./errors";
@@ -16,6 +18,10 @@ interface Branch {
 
 interface BranchList {
   [branch: string]: Branch;
+}
+
+interface SystemConfig {
+  tokenHashed: string;
 }
 
 export interface HeadIdentity {
@@ -51,8 +57,6 @@ export interface EnvConfig {
   hostDir: string;
   /** The public directory for static files */
   publicDir: string;
-  /** The application server token to serve as user self-identifier */
-  token: string;
   /** Gradient setting 1 */
   stage1: number;
   /** Gradient setting 2 */
@@ -74,14 +78,21 @@ export const isError = (
  * Handles data routing for application
  */
 class Metadata {
-  database: Db;
+  private dbClient: MongoClient;
+  private database: Db;
   config: EnvConfig;
   logger: winston.Logger;
 
-  constructor(client: Db, data: EnvConfig) {
-    this.logger = winston.createLogger(loggerConfig("META", data.logLevel));
-    this.database = client;
+  constructor(client: MongoClient, data: EnvConfig) {
+    this.dbClient = client;
+    this.database = client.db(data.dbName);
     this.config = data;
+    this.logger = winston.createLogger(loggerConfig("META", data.logLevel));
+  }
+
+  async close(): Promise<void> {
+    await this.dbClient.close();
+    this.logger.info("Database client connection closed.");
   }
 
   /**
@@ -157,10 +168,60 @@ class Metadata {
   }
 
   /**
-   * Retrieve the application token from configuration
+   * Check whether the provided token matches the hashed token
    */
-  getToken(): string {
-    return this.config.token;
+  async checkToken(token: string): Promise<boolean> {
+    const result = await this.database
+      .collection<SystemConfig>("sysconfig")
+      .findOne({});
+
+    if (result !== null) {
+      return bcrypt.compare(token, result.tokenHashed);
+    } else {
+      return Promise.reject(Error("No system configuration in place"));
+    }
+  }
+
+  /**
+   * Generate a token for use as the user self-identifier.
+   *
+   * If the token is passed after it already exists, it will be overwritten.
+   */
+  async initializeToken(token?: string | undefined): Promise<boolean> {
+    const config = await this.database
+      .collection<SystemConfig>("sysconfig")
+      .countDocuments();
+
+    if (config > 0 && token === undefined) {
+      return true;
+    }
+
+    const useToken =
+      token === undefined
+        ? (() => {
+            const newToken = uuid();
+
+            this.logger.warn(
+              "TOKEN variable not provided, using this value instead: %s",
+              newToken
+            );
+            this.logger.warn(
+              "Use this provided token to push your coverage reports to the server."
+            );
+
+            return newToken;
+          })()
+        : token;
+
+    const sysconfig = {
+      tokenHashed: await bcrypt.hash(useToken, 10),
+    };
+
+    const result = await this.database
+      .collection<SystemConfig>("sysconfig")
+      .findOneAndReplace({}, sysconfig, { upsert: true });
+
+    return result.ok === 1;
   }
 
   /**

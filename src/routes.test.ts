@@ -24,7 +24,6 @@ jest.mock("./util/logger", () => ({
 
 import loggerConfig from "./util/logger";
 import dotenv from "dotenv";
-import { Db } from "mongodb";
 dotenv.config();
 
 const LOGGER = winston.createLogger(loggerConfig("TEST", "debug"));
@@ -33,7 +32,7 @@ const HOST_DIR =
   (() => {
     const dir = path.join(__dirname, "..", "dist");
     console.warn(
-      `WARNING: HOST_DIR is not set - this is used to query files in src/routes.test.ts. Using '${dir}' as default HOST_DIR.`
+      `HOST_DIR is not set - this is used to query files in src/routes.test.ts. Using '${dir}' as default HOST_DIR.`
     );
     return dir;
   })();
@@ -41,7 +40,6 @@ const TARGET_URL = "https://localhost:3000";
 const TOKEN = "THISISCORRECT";
 
 const config: EnvConfig = {
-  token: TOKEN,
   // should be just larger than the example report used
   uploadLimit: Number(40000),
   hostDir: HOST_DIR,
@@ -58,9 +56,7 @@ const config: EnvConfig = {
 
 const defaultMetadata = {
   logger: LOGGER,
-  database: {} as Db,
   config: config,
-  getToken: () => config.token,
   getUploadLimit: () => config.uploadLimit,
   getHostDir: () => config.hostDir,
   getPublicDir: () => config.publicDir,
@@ -79,11 +75,14 @@ const defaultMetadata = {
   ),
   updateBranch: jest.fn(() => Promise.resolve(true)),
   createRepository: jest.fn(() => Promise.resolve(true)),
+  checkToken: (token: string) => Promise.resolve(token === TOKEN),
+  close: jest.fn(),
 };
 const request = async (): Promise<SuperTest<Test>> => {
   const app = express();
 
-  app.use(routes(defaultMetadata as Metadata));
+  // The unknown is dbClient, since it's a private member. It's not used anyways for routes
+  app.use(routes(defaultMetadata as unknown as Metadata));
   return _request(app);
 };
 

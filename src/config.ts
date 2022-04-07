@@ -3,28 +3,9 @@ import { MongoClient, MongoError } from "mongodb";
 import { Server } from "http";
 import path from "path";
 import fs from "fs";
-import { v4 as uuid } from "uuid";
 
 import processTemplate, { Template } from "./templates";
-import { EnvConfig } from "./metadata";
-
-/**
- * Generate a token for use as the user self-identifier
- */
-export const initializeToken = (logger: winston.Logger): string => {
-  //TODO check for token in hostDir/persist created token in hostDir so it's not regenerated on startup
-  const newToken = uuid();
-
-  logger.warn(
-    "TOKEN variable not provided, using this value instead: %s",
-    newToken
-  );
-  logger.warn(
-    "Use this provided token to push your coverage reports to the server."
-  );
-
-  return newToken;
-};
+import Metadata, { EnvConfig } from "./metadata";
 
 /**
  * Get environment variable or exit application if it doesn't exist
@@ -84,8 +65,9 @@ export const persistTemplate = async (
  */
 export const handleStartup = async (
   config: EnvConfig,
+  token: string | undefined,
   logger: winston.Logger
-): Promise<MongoClient> => {
+): Promise<Metadata> => {
   try {
     const { hostDir, publicDir, dbUri, targetUrl } = config;
     await fs.promises.access(hostDir, fs.constants.R_OK | fs.constants.W_OK);
@@ -119,7 +101,11 @@ export const handleStartup = async (
       logger
     );
 
-    return mongo;
+    const metadata = new Metadata(mongo, config);
+
+    await metadata.initializeToken(token);
+
+    return metadata;
   } catch (err) {
     logger.error("Error occurred during startup: %s", err);
     process.exit(1);
@@ -131,13 +117,12 @@ export const handleStartup = async (
  * and close open connections.
  */
 export const handleShutdown =
-  (mongo: MongoClient, server: Server, logger: winston.Logger) =>
+  (metadata: Metadata, server: Server, logger: winston.Logger) =>
   async (signal: NodeJS.Signals): Promise<void> => {
     logger.warn("%s signal received. Closing shop.", signal);
 
     try {
-      await mongo.close();
-      logger.info("MongoDB client connection closed.");
+      await metadata.close();
 
       // must await for callback - wrapped in Promise
       await new Promise((res, rej) =>

@@ -1,18 +1,44 @@
-import Metadata, { isError, EnvConfig, HeadIdentity } from "./metadata";
 import { Db, MongoClient, Collection } from "mongodb";
+import { Writable } from "stream";
+import winston from "winston";
 import { BranchNotFoundError } from "./errors";
+import Metadata, { isError, EnvConfig, HeadIdentity } from "./metadata";
 jest.mock("mongodb");
 
+let output = "";
+jest.mock("./util/logger", () => {
+  const stream = new Writable();
+  stream._write = (chunk, _encoding, next) => {
+    output = output += chunk.toString();
+    next();
+  };
+  const streamTransport = new winston.transports.Stream({ stream });
+
+  return {
+    __esModule: true,
+    default: () => ({
+      format: winston.format.combine(
+        winston.format.splat(),
+        winston.format.simple()
+      ),
+      transports: [streamTransport],
+    }),
+  };
+});
+
 const defaultEnvConfig = {
-  token: "llama",
   uploadLimit: 12,
   hostDir: "pineapple",
   publicDir: ".dir",
   stage1: 132,
   stage2: 1.0,
 };
-const defaultMetadata = () =>
-  new Metadata(new Db({} as MongoClient, ""), defaultEnvConfig as EnvConfig);
+const defaultMetadata = () => {
+  jest
+    .spyOn(MongoClient.prototype, "db")
+    .mockImplementation(() => new Db({} as MongoClient, ""));
+  return new Metadata(new MongoClient(""), defaultEnvConfig as EnvConfig);
+};
 
 describe("isError", () => {
   it("should return false when object is a HeadContext", () => {
@@ -372,16 +398,34 @@ describe("createRepository", () => {
   });
 });
 
-describe("getToken", () => {
-  it("should return the token from EnvConfig", () => {
+describe("initializeToken", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("Should generate a UUID", async () => {
     // Arrange
     const metadata = defaultMetadata();
+    const collectionMethod = jest
+      .spyOn(Db.prototype, "collection")
+      .mockImplementation(() => new Collection());
+    const countMethod = jest
+      .spyOn(Collection.prototype, "countDocuments")
+      .mockImplementation(() => Promise.resolve(0));
+    const replaceMethod = jest
+      .spyOn(Collection.prototype, "findOneAndReplace")
+      .mockImplementation(() => Promise.resolve({ ok: 1 }));
+    output = "";
 
     // Act
-    const result = metadata.getToken();
+    const result = await metadata.initializeToken();
 
     // Assert
-    expect(result).toEqual(defaultEnvConfig.token);
+    expect(result).toEqual(true);
+    expect(output).toMatch(/([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})/);
+    expect(collectionMethod).toHaveBeenCalledTimes(2);
+    expect(countMethod).toHaveBeenCalledTimes(1);
+    expect(replaceMethod).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -5,14 +5,9 @@ import expressWinston from "express-winston";
 import path from "path";
 
 import routes from "./routes";
-import Metadata, { EnvConfig } from "./metadata";
+import { EnvConfig } from "./metadata";
 import loggerConfig from "./util/logger";
-import {
-  configOrError,
-  handleStartup,
-  handleShutdown,
-  initializeToken,
-} from "./config";
+import { configOrError, handleStartup, handleShutdown } from "./config";
 
 dotenv.config();
 
@@ -38,15 +33,13 @@ const ENV_CONFIG: EnvConfig = {
   hostDir: configOrError("HOST_DIR", logger),
 
   // Application configuration
-  token: process.env.TOKEN ?? initializeToken(logger),
   stage1: Number(process.env.STAGE_1 ?? 95),
   stage2: Number(process.env.STAGE_2 ?? 80),
   logLevel: LOG_LEVEL,
 };
 
-handleStartup(ENV_CONFIG, logger).then((mongo) => {
+handleStartup(ENV_CONFIG, process.env.TOKEN, logger).then((metadata) => {
   const app: express.Application = express();
-  const metadata = new Metadata(mongo.db(ENV_CONFIG.dbName), ENV_CONFIG);
 
   app.use(
     expressWinston.logger({
@@ -75,6 +68,6 @@ handleStartup(ENV_CONFIG, logger).then((mongo) => {
   // application exit handling
   const signalCodes: NodeJS.Signals[] = ["SIGTERM", "SIGHUP", "SIGINT"];
   signalCodes.map((code: NodeJS.Signals) => {
-    process.on(code, handleShutdown(mongo, server, logger));
+    process.on(code, handleShutdown(metadata, server, logger));
   });
 });

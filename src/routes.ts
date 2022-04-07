@@ -89,61 +89,68 @@ const routes = (metadata: Metadata): Router => {
   );
 
   // Upload file
-  router.post("/v1/:org/:repo/:branch/:commit.:ext(html|xml)", (req, res) => {
-    const { org, repo, branch, commit } = req.params;
+  router.post(
+    "/v1/:org/:repo/:branch/:commit.:ext(html|xml)",
+    async (req, res) => {
+      const { org, repo, branch, commit } = req.params;
 
-    const { token, format } = req.query;
-    if (token != metadata.getToken()) {
-      return res.status(401).send(Messages.InvalidToken);
-    }
-
-    if (typeof format !== "string" || !formats.listFormats().includes(format)) {
-      return res.status(406).send(Messages.InvalidFormat);
-    }
-
-    const limit = metadata.getUploadLimit();
-    if (Number(req.headers["content-length"] ?? 0) > limit) {
-      return res.status(413).send(Messages.FileTooLarge);
-    }
-
-    let contents = "";
-    req.on("data", (raw) => {
-      if (contents.length <= limit) {
-        contents += raw;
+      const { token, format } = req.query;
+      const clarifiedToken = (token ?? "").toString();
+      if (!(await metadata.checkToken(clarifiedToken))) {
+        return res.status(401).send(Messages.InvalidToken);
       }
-    });
-    req.on("end", async () => {
-      const formatter = formats.getFormat(format);
-      const identity = {
-        organization: org,
-        repository: repo,
-        branch,
-        head: { commit, format },
-      };
 
-      try {
-        const result = await commitFormatDocs(contents, identity, formatter);
+      if (
+        typeof format !== "string" ||
+        !formats.listFormats().includes(format)
+      ) {
+        return res.status(406).send(Messages.InvalidFormat);
+      }
 
-        if (typeof result === "boolean") {
-          if (result) {
-            return res.status(200).send();
-          } else {
-            logger.error(
-              "Unknown error while attempting to commit branch update"
-            );
-            return res.status(500).send(Messages.UnknownError);
-          }
-        } else {
-          return res.status(400).send(Messages.InvalidFormat);
+      const limit = metadata.getUploadLimit();
+      if (Number(req.headers["content-length"] ?? 0) > limit) {
+        return res.status(413).send(Messages.FileTooLarge);
+      }
+
+      let contents = "";
+      req.on("data", (raw) => {
+        if (contents.length <= limit) {
+          contents += raw;
         }
-      } catch (err) {
-        logger.error(
-          err ?? "Unknown error occurred while processing POST request"
-        );
-        return res.status(500).send(Messages.UnknownError);
-      }
-    });
-  });
+      });
+      req.on("end", async () => {
+        const formatter = formats.getFormat(format);
+        const identity = {
+          organization: org,
+          repository: repo,
+          branch,
+          head: { commit, format },
+        };
+
+        try {
+          const result = await commitFormatDocs(contents, identity, formatter);
+
+          if (typeof result === "boolean") {
+            if (result) {
+              return res.status(200).send();
+            } else {
+              logger.error(
+                "Unknown error while attempting to commit branch update"
+              );
+              return res.status(500).send(Messages.UnknownError);
+            }
+          } else {
+            return res.status(400).send(Messages.InvalidFormat);
+          }
+        } catch (err) {
+          logger.error(
+            err ?? "Unknown error occurred while processing POST request"
+          );
+          return res.status(500).send(Messages.UnknownError);
+        }
+      });
+    }
+  );
 
   /**
    * Read a file from the host directory.
