@@ -3,7 +3,6 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import winston from "winston";
-import { Db } from "mongodb";
 import { badgen } from "badgen";
 
 import { persistTemplate } from "./config";
@@ -25,21 +24,8 @@ jest.mock("./util/logger", () => ({
 
 import loggerConfig from "./util/logger";
 import dotenv from "dotenv";
+import { Db } from "mongodb";
 dotenv.config();
-
-type MetadataMockType = {
-  logger: winston.Logger;
-  database: Db;
-  config: EnvConfig;
-  getHeadCommit: jest.Mock;
-  getToken: jest.Mock;
-  getUploadLimit: jest.Mock;
-  getHostDir: jest.Mock;
-  getPublicDir: jest.Mock;
-  getGradientStyle: jest.Mock;
-  updateBranch: jest.Mock;
-  createRepository: jest.Mock;
-};
 
 const LOGGER = winston.createLogger(loggerConfig("TEST", "debug"));
 const HOST_DIR =
@@ -52,9 +38,10 @@ const HOST_DIR =
     return dir;
   })();
 const TARGET_URL = "https://localhost:3000";
+const TOKEN = "THISISCORRECT";
 
-const config = {
-  token: "THISISCORRECT",
+const config: EnvConfig = {
+  token: TOKEN,
   // should be just larger than the example report used
   uploadLimit: Number(40000),
   hostDir: HOST_DIR,
@@ -68,35 +55,35 @@ const config = {
   dbUri: "localhost",
   logLevel: "debug",
 };
-const mock = (
-  headCommit: jest.Mock = jest.fn(
-    () =>
-      new Promise((solv) => solv({ commit: "testcommit", format: "tarpaulin" }))
-  ),
-  updateBranch: jest.Mock = jest.fn(() => new Promise((solv) => solv(true)))
-): MetadataMockType => ({
+
+const defaultMetadata = {
   logger: LOGGER,
   database: {} as Db,
   config: config,
-  getToken: jest.fn(() => config.token),
-  getUploadLimit: jest.fn(() => config.uploadLimit),
-  getHostDir: jest.fn(() => config.hostDir),
-  getPublicDir: jest.fn(() => config.publicDir),
-  getGradientStyle: jest.fn(() => ({
+  getToken: () => config.token,
+  getUploadLimit: () => config.uploadLimit,
+  getHostDir: () => config.hostDir,
+  getPublicDir: () => config.publicDir,
+  getGradientStyle: () => ({
     stage1: config.stage1,
     stage2: config.stage2,
-  })),
-  getHeadCommit: headCommit,
-  updateBranch: updateBranch,
-  createRepository: jest.fn(),
-});
-
-const request = async (
-  mockMeta: MetadataMockType = mock()
-): Promise<SuperTest<Test>> => {
+  }),
+  getHeadCommit: jest.fn<
+    Promise<{ commit: string; format: string } | BranchNotFoundError>,
+    string[]
+  >(() =>
+    Promise.resolve({
+      commit: "testcommit",
+      format: "tarpaulin",
+    })
+  ),
+  updateBranch: jest.fn(() => Promise.resolve(true)),
+  createRepository: jest.fn(() => Promise.resolve(true)),
+};
+const request = async (): Promise<SuperTest<Test>> => {
   const app = express();
 
-  app.use(routes(mockMeta as Metadata));
+  app.use(routes(defaultMetadata as Metadata));
   return _request(app);
 };
 
@@ -269,34 +256,43 @@ describe("Badges and reports", () => {
   });
 
   describe("GET /v1/:org/:repo/:branch.html", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it("should retrieve the stored report file with the associated head commit", async () => {
-      const mockMeta = mock();
-      const res = await (await request(mockMeta))
+      // Arrange
+      const headCommit = { commit: "testcommit", format: "tarpaulin" };
+      const head =
+        defaultMetadata.getHeadCommit.mockResolvedValueOnce(headCommit);
+      const buffer = await fs.promises.readFile(tarpaulinReport);
+
+      // Act
+      const res = await (await request())
         .get("/v1/testorg/testrepo/testbranch.html")
         .expect("Content-Type", /html/)
         .expect(200);
-      const buffer = await fs.promises.readFile(tarpaulinReport);
 
-      expect(mockMeta.getHeadCommit).toHaveBeenCalledTimes(1);
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
       expect(res.text).toEqual(buffer.toString("utf-8"));
     });
 
     it("should retrieve the marked format as stored in metadata", async () => {
-      const head = jest.fn(
-        () =>
-          new Promise((solv) =>
-            solv({ commit: "testcommit", format: "cobertura" })
-          )
-      );
-      const mockMeta = mock(head);
-      // request HTML, get XML
-      const res = await (await request(mockMeta))
+      // Arrange
+      const headCommit = { commit: "testcommit", format: "cobertura" };
+      const head =
+        defaultMetadata.getHeadCommit.mockResolvedValueOnce(headCommit);
+      const buffer = await fs.promises.readFile(coberturaReport);
+
+      // Act
+      const res = await (await request())
         .get("/v1/testorg/testrepo/testbranch.html")
         .expect("Content-Type", /xml/)
         .expect(200);
-      const buffer = await fs.promises.readFile(coberturaReport);
 
-      expect(mockMeta.getHeadCommit).toHaveBeenCalledTimes(1);
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
       expect(res.text).toEqual(buffer.toString("utf-8"));
     });
 
@@ -305,57 +301,72 @@ describe("Badges and reports", () => {
     });
 
     it("should return 404 if head commit not found", async () => {
-      const head = jest.fn(
-        () => new Promise((solv) => solv(new BranchNotFoundError()))
+      // Arrange
+      const head = defaultMetadata.getHeadCommit.mockResolvedValueOnce(
+        new BranchNotFoundError()
       );
-      await (await request(mock(head)))
+
+      // Act
+      await (await request())
         .get("/v1/testorg/testrepo/testbranch.html")
         .expect(404);
+
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
     });
 
     it("should return 500 if promise is rejected", async () => {
-      const head = jest.fn(() => new Promise((_, rej) => rej("fooey")));
-      await (await request(mock(head)))
+      // Arrang
+      const head = defaultMetadata.getHeadCommit.mockRejectedValueOnce("fooey");
+
+      // Act
+      await (await request())
         .get("/v1/testorg/testrepo/testbranch.html")
         .expect(500);
+
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("GET /v1/:org/:repo/:branch.xml", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it("should retrieve the stored report file with the associated head commit", async () => {
-      const head = jest.fn(
-        () =>
-          new Promise((solv) =>
-            solv({ commit: "testcommit", format: "cobertura" })
-          )
-      );
-      const mockMeta = mock(head);
-      const res = await (await request(mockMeta))
+      // Arrange
+      const headCommit = { commit: "testcommit", format: "cobertura" };
+      const head =
+        defaultMetadata.getHeadCommit.mockResolvedValueOnce(headCommit);
+      const buffer = await fs.promises.readFile(coberturaReport);
+
+      // Act
+      const res = await (await request())
         .get("/v1/testorg/testrepo/testbranch.xml")
         .expect("Content-Type", /xml/)
         .expect(200);
-      const buffer = await fs.promises.readFile(coberturaReport);
 
-      expect(mockMeta.getHeadCommit).toHaveBeenCalledTimes(1);
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
       expect(res.text).toEqual(buffer.toString("utf-8"));
     });
 
     it("should retrieve the marked format as stored in metadata", async () => {
-      const head = jest.fn(
-        () =>
-          new Promise((solv) =>
-            solv({ commit: "testcommit", format: "tarpaulin" })
-          )
-      );
-      const mockMeta = mock(head);
-      // request XML, get HTML
-      const res = await (await request(mockMeta))
+      // Arrange
+      const headCommit = { commit: "testcommit", format: "tarpaulin" };
+      const head =
+        defaultMetadata.getHeadCommit.mockResolvedValueOnce(headCommit);
+      const buffer = await fs.promises.readFile(tarpaulinReport);
+
+      // Act
+      const res = await (await request())
         .get("/v1/testorg/testrepo/testbranch.xml")
         .expect("Content-Type", /html/)
         .expect(200);
-      const buffer = await fs.promises.readFile(tarpaulinReport);
 
-      expect(mockMeta.getHeadCommit).toHaveBeenCalledTimes(1);
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
       expect(res.text).toEqual(buffer.toString("utf-8"));
     });
 
@@ -364,19 +375,31 @@ describe("Badges and reports", () => {
     });
 
     it("should return 404 if head commit not found", async () => {
-      const head = jest.fn(
-        () => new Promise((solv) => solv(new BranchNotFoundError()))
+      // Arrange
+      const head = defaultMetadata.getHeadCommit.mockResolvedValueOnce(
+        new BranchNotFoundError()
       );
-      await (await request(mock(head)))
+
+      // Act
+      await (await request())
         .get("/v1/testorg/testrepo/testbranch.xml")
         .expect(404);
+
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
     });
 
     it("should return 500 if promise is rejected", async () => {
-      const head = jest.fn(() => new Promise((_, rej) => rej("fooey")));
-      await (await request(mock(head)))
+      // Arrange
+      const head = defaultMetadata.getHeadCommit.mockRejectedValueOnce("fooey");
+
+      // Act
+      await (await request())
         .get("/v1/testorg/testrepo/testbranch.xml")
         .expect(500);
+
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -398,14 +421,24 @@ describe("Badges and reports", () => {
   });
 
   describe("GET /v1/:org/:repo/:branch.svg", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it("should retrieve the stored report badge with the associated head commit", async () => {
-      const mockMeta = mock();
-      const res = await (await request(mockMeta))
+      // Arrange
+      const headCommit = { commit: "testcommit", format: "tarpaulin" };
+      const head =
+        defaultMetadata.getHeadCommit.mockResolvedValueOnce(headCommit);
+
+      // Act
+      const res = await (await request())
         .get("/v1/testorg/testrepo/testbranch.svg")
         .expect("Content-Type", /svg/)
         .expect(200);
 
-      expect(mockMeta.getHeadCommit).toHaveBeenCalledTimes(1);
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
       expect(res.body.toString("utf-8")).toEqual(fakeBadge);
     });
 
@@ -414,19 +447,31 @@ describe("Badges and reports", () => {
     });
 
     it("should return 404 if head commit not found", async () => {
-      const head = jest.fn(
-        () => new Promise((solv) => solv(new BranchNotFoundError()))
+      // Arrange
+      const head = defaultMetadata.getHeadCommit.mockResolvedValueOnce(
+        new BranchNotFoundError()
       );
-      await (await request(mock(head)))
+
+      // Act
+      await (await request())
         .get("/v1/testorg/testrepo/testbranch.svg")
         .expect(404);
+
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
     });
 
     it("should return 500 if promise is rejected", async () => {
-      const head = jest.fn(() => new Promise((_, rej) => rej("fooey")));
-      await (await request(mock(head)))
+      // Arrange
+      const head = defaultMetadata.getHeadCommit.mockRejectedValueOnce("fooey");
+
+      // Act
+      await (await request())
         .get("/v1/testorg/testrepo/testbranch.svg")
         .expect(500);
+
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
     });
   });
 });
@@ -455,28 +500,36 @@ describe("Uploads", () => {
   });
 
   describe("POST /v1/:org/:repo/:branch/:commit.html", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     const data = fs.promises.readFile(
       path.join(__dirname, "..", "example_reports", "tarpaulin-report.html")
     );
 
     it("should upload the report and generate a badge", async () => {
-      const mockMeta = mock();
+      // Arrange
+      const head = defaultMetadata.updateBranch.mockResolvedValueOnce(true);
+
+      // Act
       await (
-        await request(mockMeta)
+        await request()
       )
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
+          `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
         )
         .send(await data)
         .expect(200);
 
-      expect(mockMeta.updateBranch).toBeCalledWith({
+      // Assert
+      expect(head).toBeCalledWith({
         organization: "testorg",
         repository: "testrepo",
         branch: "newthis",
         head: { commit: "newthat", format: "tarpaulin" },
       });
-      expect(mockMeta.updateBranch).toHaveBeenCalledTimes(1);
+      expect(head).toHaveBeenCalledTimes(1);
       await fs.promises.access(
         path.join(reportPath, "index.html"),
         fs.constants.R_OK
@@ -503,7 +556,7 @@ describe("Uploads", () => {
         await request()
       )
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=pepperoni`
+          `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=pepperoni`
         )
         .send(await data)
         .expect(406);
@@ -512,7 +565,7 @@ describe("Uploads", () => {
     it("should return 400 when request body is not the appropriate format", async () => {
       await (await request())
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
+          `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
         )
         .send("This is not a file")
         .expect(400);
@@ -526,60 +579,80 @@ describe("Uploads", () => {
       }
       await (await request())
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
+          `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
         )
         .send(bigData)
         .expect(413);
     });
 
     it("should return 500 when Metadata does not create branch", async () => {
-      const update = jest.fn(() => new Promise((solv) => solv(false)));
+      // Arrange
+      const head = defaultMetadata.updateBranch.mockResolvedValueOnce(false);
+
+      // Act
       await (
-        await request(mock(jest.fn(), update))
+        await request()
       )
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
+          `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
         )
         .send(await data)
         .expect(500);
+
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
     });
 
     it("should return 500 when promise chain is rejected", async () => {
-      const update = jest.fn(() => new Promise((_, rej) => rej("fooey 2")));
+      // Arrange
+      const head =
+        defaultMetadata.updateBranch.mockRejectedValueOnce("fooey 2");
+
+      // Act
       await (
-        await request(mock(jest.fn(), update))
+        await request()
       )
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.html?token=${config.token}&format=tarpaulin`
+          `/v1/testorg/testrepo/newthis/newthat.html?token=${TOKEN}&format=tarpaulin`
         )
         .send(await data)
         .expect(500);
+
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("POST /v1/:org/:repo/:branch/:commit.xml", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     const data = fs.promises.readFile(
       path.join(__dirname, "..", "example_reports", "cobertura-report.xml")
     );
 
     it("should upload the report and generate a badge", async () => {
-      const mockMeta = mock();
+      // Arrange
+      const head = defaultMetadata.updateBranch.mockResolvedValueOnce(true);
+
+      // Act
       await (
-        await request(mockMeta)
+        await request()
       )
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=cobertura`
+          `/v1/testorg/testrepo/newthis/newthat.xml?token=${TOKEN}&format=cobertura`
         )
         .send(await data)
         .expect(200);
 
-      expect(mockMeta.updateBranch).toBeCalledWith({
+      expect(head).toBeCalledWith({
         organization: "testorg",
         repository: "testrepo",
         branch: "newthis",
         head: { commit: "newthat", format: "cobertura" },
       });
-      expect(mockMeta.updateBranch).toHaveBeenCalledTimes(1);
+      expect(head).toHaveBeenCalledTimes(1);
       await fs.promises.access(
         path.join(reportPath, "index.xml"),
         fs.constants.R_OK
@@ -606,7 +679,7 @@ describe("Uploads", () => {
         await request()
       )
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=pepperoni`
+          `/v1/testorg/testrepo/newthis/newthat.xml?token=${TOKEN}&format=pepperoni`
         )
         .send(await data)
         .expect(406);
@@ -615,7 +688,7 @@ describe("Uploads", () => {
     it("should return 400 when request body is not the appropriate format", async () => {
       await (await request())
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=cobertura`
+          `/v1/testorg/testrepo/newthis/newthat.xml?token=${TOKEN}&format=cobertura`
         )
         .send("This is not a file")
         .expect(400);
@@ -629,34 +702,47 @@ describe("Uploads", () => {
       }
       await (await request())
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=cobertura`
+          `/v1/testorg/testrepo/newthis/newthat.xml?token=${TOKEN}&format=cobertura`
         )
         .send(bigData)
         .expect(413);
     });
 
     it("should return 500 when Metadata does not create branch", async () => {
-      const update = jest.fn(() => new Promise((solv) => solv(false)));
+      // Arrange
+      const head = defaultMetadata.updateBranch.mockResolvedValueOnce(false);
+
+      // Act
       await (
-        await request(mock(jest.fn(), update))
+        await request()
       )
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=cobertura`
+          `/v1/testorg/testrepo/newthis/newthat.xml?token=${TOKEN}&format=cobertura`
         )
         .send(await data)
         .expect(500);
+
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
     });
 
     it("should return 500 when promise chain is rejected", async () => {
-      const update = jest.fn(() => new Promise((_, rej) => rej("fooey 2")));
+      // Arrange
+      const head =
+        defaultMetadata.updateBranch.mockRejectedValueOnce("fooey 2");
+
+      // Act
       await (
-        await request(mock(jest.fn(), update))
+        await request()
       )
         .post(
-          `/v1/testorg/testrepo/newthis/newthat.xml?token=${config.token}&format=cobertura`
+          `/v1/testorg/testrepo/newthis/newthat.xml?token=${TOKEN}&format=cobertura`
         )
         .send(await data)
         .expect(500);
+
+      // Assert
+      expect(head).toHaveBeenCalledTimes(1);
     });
   });
 });
