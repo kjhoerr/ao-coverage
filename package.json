@@ -16,6 +16,7 @@
     "lint:fix": "eslint --fix 'src/**/*.ts'",
     "test": "jest",
     "test:coverage": "jest --coverage",
+    "test:debug": "node --expose-gc $(yarn bin jest) --logHeapUsage",
     "tsc": "tsc",
     "doc": "typedoc src"
   },
