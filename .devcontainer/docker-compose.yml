@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 services:
   aocov:
@@ -6,12 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # On Linux, you may need to update USER_UID and USER_GID below if not your local UID is not 1000.
-        USER_UID: 1000
-        USER_GID: 1000
-
-        INSTALL_ZSH: "false"
-        MONGO_TOOLS_VERSION: 4.2
+        VARIANT: 16-bullseye
+        MONGO_TOOLS_VERSION: 5.0
 
         # Volume directory for hosted files. This directory is created on image build with proper permissions. This is set as an env-var in the Dockerfile
         HOST_DIR: /dist
@@ -36,17 +32,9 @@ services:
       - ..:/workspace:cached
       - dev-dist:/dist:cached
 
-    # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
-
-    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
     network_mode: service:aocov-db
-
-    # Uncomment the next line to use a non-root user for all processes.
     user: node
-
-    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally. 
-    # (Adding the "ports" property to this file will not forward from a Codespace.)
 
   aocov-db:
     image: mongo:latest
@@ -57,9 +45,6 @@ services:
 
     environment:
       MONGO_INITDB_DATABASE: ao-coverage
-
-    # Add "forwardPorts": ["27017"] to **devcontainer.json** to forward MongoDB locally.
-    # (Adding the "ports" property to this file will not forward from a Codespace.)
 
 volumes:
   mongodb-data:

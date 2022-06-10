@@ -1,5 +1,5 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.194.0/containers/javascript-node-mongo
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.234.0/containers/javascript-node-mongo
 {
 	"name": "AO Coverage",
 	"dockerComposeFile": "docker-compose.yml",
@@ -15,7 +15,10 @@
 		"esbenp.prettier-vscode",
 		"arcanis.vscode-zipfs"
 	],
-	"forwardPorts": [3000, 27017],
+	"features": {
+		"docker-from-docker": "latest",
+		"kubectl-helm-minikube": "latest"
+	},
 	"postCreateCommand": "yarn install",
 	"remoteUser": "node"
 }
