@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
       args:
         VARIANT: 16-buster
-        MONGO_TOOLS_VERSION: 5.0
+        MONGO_TOOLS_VERSION: "5.0"
 
         # Volume directory for hosted files. This directory is created on image build with proper permissions. This is set as an env-var in the Dockerfile
         HOST_DIR: /dist
